@@ -1,12 +1,10 @@
 import React from "react";
-import Link from "next/link";
 import { Box } from "@chakra-ui/react";
 import { Input } from "@chakra-ui/react";
 import { Button } from "@chakra-ui/react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useAPISendEmailForRegister } from "@/hook/api/user/useAPISendEmailForRegister";
 import { useAPICreateForClerk } from "@/hook/api/user/useAPICreateForClerk";
 import { useRouter } from "next/router";
 import { IoIosArrowBack } from "react-icons/io";
