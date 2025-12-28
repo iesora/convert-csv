@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 import { Layout, theme } from "antd";
 import Sidebar from "@/components/Sidebar";
 
-const { Content, Footer } = Layout;
+const { Content } = Layout;
 
 interface PageLayoutProps {
   children: ReactNode;

@@ -36,8 +36,6 @@ const Sidebar: React.FC = () => {
 
   const menuItems: MenuProps["items"] = [
     { key: "/", icon: <HomeOutlined />, label: "ホーム" },
-    { key: "/test", icon: <HomeOutlined />, label: "テスト" },
-    { key: "logout", icon: <HomeOutlined />, label: "ログアウト" },
   ];
 
   return (
