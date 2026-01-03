@@ -850,7 +850,18 @@ export default function AssetConverterTool() {
           outRow[1] = "1"; // 分割コード: 2桁"01"でなく"1"に
           outRow[2] = assetTypeCode; // 資産種類コード: Geminiで分類
           outRow[3] = kamoku;
-          outRow[4] = cols[19] === "即時償却" ? "少額資産" : "定額法";
+          // 償却方法: 資産種類コードに応じて設定
+          let depreciationMethod: string;
+          if (assetTypeCode === "F0") {
+            depreciationMethod = "任意償却";
+          } else if (assetTypeCode === "B0" || assetTypeCode === "E0") {
+            depreciationMethod = "均等償却";
+          } else {
+            // それ以外は従来のロジック
+            depreciationMethod =
+              cols[19] === "即時償却" ? "少額資産" : "定額法";
+          }
+          outRow[4] = depreciationMethod;
           outRow[10] = name;
           outRow[13] = 取得日;
           outRow[14] = 供用日;
