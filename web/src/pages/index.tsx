@@ -878,7 +878,7 @@ export default function AssetConverterTool() {
           if (depreciationMethod === "均等償却" && 耐用年数) {
             const 耐用年数数値 = parseFloat(耐用年数);
             if (!isNaN(耐用年数数値)) {
-              outRow[34] = String(Math.round(耐用年数数値 * 12));
+              outRow[26] = String(Math.round(耐用年数数値 * 12));
             }
           }
 
