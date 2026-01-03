@@ -371,7 +371,214 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
-async function classifyAssetType(assetTypeName: string): Promise<string> {
+// 条件分岐で資産種類コードを判定
+function classifyAssetTypeByRule(assetTypeName: string): string {
+  if (!assetTypeName) return "";
+
+  const normalized = assetTypeName.trim().toLowerCase();
+
+  // 00：建物
+  if (
+    normalized.includes("建物") ||
+    normalized.includes("ビル") ||
+    normalized.includes("倉庫") ||
+    normalized.includes("工場") ||
+    normalized.includes("事務所") ||
+    normalized.includes("店舗") ||
+    normalized.includes("マンション") ||
+    normalized.includes("アパート")
+  ) {
+    return "00";
+  }
+
+  // 10：建物附属設備
+  if (
+    normalized.includes("建物附属") ||
+    normalized.includes("附属設備") ||
+    normalized.includes("エレベーター") ||
+    normalized.includes("エスカレーター") ||
+    normalized.includes("空調設備") ||
+    normalized.includes("給排水設備") ||
+    normalized.includes("電気設備") ||
+    normalized.includes("ガス設備")
+  ) {
+    return "10";
+  }
+
+  // 20：構築物
+  if (
+    normalized.includes("構築物") ||
+    normalized.includes("橋") ||
+    normalized.includes("トンネル") ||
+    normalized.includes("ダム") ||
+    normalized.includes("道路") ||
+    normalized.includes("鉄道") ||
+    normalized.includes("擁壁") ||
+    normalized.includes("外構") ||
+    normalized.includes("フェンス") ||
+    normalized.includes("門") ||
+    normalized.includes("塀")
+  ) {
+    return "20";
+  }
+
+  // 30：船舶
+  if (
+    normalized.includes("船舶") ||
+    normalized.includes("船") ||
+    normalized.includes("ボート") ||
+    normalized.includes("ヨット")
+  ) {
+    return "30";
+  }
+
+  // 40：航空機
+  if (
+    normalized.includes("航空機") ||
+    normalized.includes("飛行機") ||
+    normalized.includes("ヘリコプター")
+  ) {
+    return "40";
+  }
+
+  // 50：車両運搬具
+  if (
+    normalized.includes("車両") ||
+    normalized.includes("自動車") ||
+    normalized.includes("トラック") ||
+    normalized.includes("バス") ||
+    normalized.includes("バイク") ||
+    normalized.includes("オートバイ") ||
+    normalized.includes("自転車") ||
+    normalized.includes("運搬具") ||
+    normalized.includes("フォークリフト") ||
+    normalized.includes("建設機械")
+  ) {
+    return "50";
+  }
+
+  // 60：工具
+  if (
+    normalized.includes("工具") ||
+    normalized.includes("治具") ||
+    normalized.includes("金型") ||
+    normalized.includes("ドリル") ||
+    normalized.includes("レンチ")
+  ) {
+    return "60";
+  }
+
+  // 70：器具備品
+  if (
+    normalized.includes("器具") ||
+    normalized.includes("備品") ||
+    normalized.includes("机") ||
+    normalized.includes("椅子") ||
+    normalized.includes("テーブル") ||
+    normalized.includes("キャビネット") ||
+    normalized.includes("書棚") ||
+    normalized.includes("応接セット") ||
+    normalized.includes("冷蔵庫") ||
+    normalized.includes("洗濯機") ||
+    normalized.includes("エアコン") ||
+    normalized.includes("テレビ") ||
+    normalized.includes("パソコン") ||
+    normalized.includes("コピー機") ||
+    normalized.includes("プリンター") ||
+    normalized.includes("ファックス")
+  ) {
+    return "70";
+  }
+
+  // 80：機械装置
+  if (
+    normalized.includes("機械") ||
+    normalized.includes("装置") ||
+    normalized.includes("設備") ||
+    normalized.includes("工作機械") ||
+    normalized.includes("製造設備") ||
+    normalized.includes("生産設備") ||
+    normalized.includes("加工機械") ||
+    normalized.includes("印刷機械") ||
+    normalized.includes("製本機械")
+  ) {
+    return "80";
+  }
+
+  // 90：生物
+  if (
+    normalized.includes("生物") ||
+    normalized.includes("牛") ||
+    normalized.includes("馬") ||
+    normalized.includes("果樹") ||
+    normalized.includes("樹木")
+  ) {
+    return "90";
+  }
+
+  // A0：無形固定資産
+  if (
+    normalized.includes("無形") ||
+    normalized.includes("特許") ||
+    normalized.includes("商標") ||
+    normalized.includes("意匠") ||
+    normalized.includes("ソフトウェア") ||
+    normalized.includes("ライセンス")
+  ) {
+    return "A0";
+  }
+
+  // B0：フランチャイズ費
+  if (
+    normalized.includes("フランチャイズ") ||
+    normalized.includes("FC") ||
+    normalized.includes("加盟")
+  ) {
+    return "B0";
+  }
+
+  // C0：土地
+  if (
+    normalized.includes("土地") ||
+    normalized.includes("宅地") ||
+    normalized.includes("農地") ||
+    normalized.includes("山林")
+  ) {
+    return "C0";
+  }
+
+  // D0：非償却資産
+  if (
+    normalized.includes("非償却") ||
+    normalized.includes("美術品") ||
+    normalized.includes("骨董品")
+  ) {
+    return "D0";
+  }
+
+  // E0：創立費
+  if (normalized.includes("創立") || normalized.includes("設立")) {
+    return "E0";
+  }
+
+  // F0：一括償却資産
+  if (normalized.includes("一括償却") || normalized.includes("少額")) {
+    return "F0";
+  }
+
+  // ##：一括償却
+  if (normalized.includes("一括償却") && !normalized.includes("資産")) {
+    return "##";
+  }
+
+  return "";
+}
+
+// Gemini APIで資産種類コードを判定（条件分岐で判定できない場合のみ使用）
+async function classifyAssetTypeByGemini(
+  assetTypeName: string,
+  retryCount: number = 3
+): Promise<string> {
   const apiKey = "AIzaSyDeMxQphuYyuz_rlKB4KhT-xTnCg4AZpYI";
   if (!apiKey) {
     console.warn(
@@ -419,40 +626,102 @@ async function classifyAssetType(assetTypeName: string): Promise<string> {
     },
   };
 
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+  for (let attempt = 0; attempt < retryCount; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (!response.ok) {
-      console.error(`Gemini API Error: ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(
+          `Gemini API Error (${response.status}): ${errorText} (試行 ${
+            attempt + 1
+          }/${retryCount})`
+        );
+
+        // レート制限エラー（429）の場合は、より長い待機時間を設定
+        if (response.status === 429) {
+          const waitTime = Math.pow(2, attempt) * 1000; // 指数バックオフ
+          console.log(`${waitTime}ms待機してからリトライします...`);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        // その他のエラーの場合もリトライ
+        if (attempt < retryCount - 1) {
+          const waitTime = 1000 * (attempt + 1); // 1秒、2秒、3秒...
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        return "";
+      }
+
+      const data = await response.json();
+
+      // エラーレスポンスのチェック
+      if (data.error) {
+        console.error(`Gemini API Error: ${JSON.stringify(data.error)}`);
+        if (attempt < retryCount - 1) {
+          const waitTime = 1000 * (attempt + 1);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
+        return "";
+      }
+
+      if (
+        !data.candidates ||
+        !data.candidates[0] ||
+        !data.candidates[0].content
+      ) {
+        console.error("Gemini API: 予期しないレスポンス形式", data);
+        if (attempt < retryCount - 1) {
+          const waitTime = 1000 * (attempt + 1);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
+        return "";
+      }
+
+      const text = data.candidates[0].content.parts[0].text.trim();
+
+      // コードのみを抽出（マークダウンや余分なテキストを除去）
+      const codeMatch = text.match(/(?:^|\s)([0-9A-F]{2}|##)(?:\s|$)/);
+      if (codeMatch) {
+        return codeMatch[1];
+      }
+
+      // マッチしない場合は、テキストから直接抽出を試みる
+      const cleaned = text.replace(/```/g, "").replace(/json/g, "").trim();
+      if (cleaned.match(/^[0-9A-F]{2}$|^##$/)) {
+        return cleaned;
+      }
+
+      // コードが見つからない場合も成功として扱う（空文字列を返す）
+      return "";
+    } catch (error) {
+      console.error(
+        `資産種類コードの分類中にエラーが発生しました (試行 ${
+          attempt + 1
+        }/${retryCount}):`,
+        error
+      );
+      if (attempt < retryCount - 1) {
+        const waitTime = 1000 * (attempt + 1);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+        continue;
+      }
       return "";
     }
-
-    const data = await response.json();
-    const text = data.candidates[0].content.parts[0].text.trim();
-
-    // コードのみを抽出（マークダウンや余分なテキストを除去）
-    const codeMatch = text.match(/(?:^|\s)([0-9A-F]{2}|##)(?:\s|$)/);
-    if (codeMatch) {
-      return codeMatch[1];
-    }
-
-    // マッチしない場合は、テキストから直接抽出を試みる
-    const cleaned = text.replace(/```/g, "").replace(/json/g, "").trim();
-    if (cleaned.match(/^[0-9A-F]{2}$|^##$/)) {
-      return cleaned;
-    }
-
-    return "";
-  } catch (error) {
-    console.error("資産種類コードの分類中にエラーが発生しました:", error);
-    return "";
   }
+
+  return "";
 }
 
 export default function AssetConverterTool() {
@@ -527,6 +796,8 @@ export default function AssetConverterTool() {
           }
         );
 
+        let geminiCount = 0; // Gemini APIを使用した件数
+
         // 各資産種類名を分類
         for (let i = 0; i < detailRows.length; i++) {
           const { cols, kamoku } = detailRows[i];
@@ -546,12 +817,33 @@ export default function AssetConverterTool() {
           const 数量 = cleanNumber(cols[10]);
           const 単位 = cols[11] || "";
 
-          // 生成されるファイルの8行目以下（データ行）のD列（資産種類名）をGeminiで分類
+          // 生成されるファイルの8行目以下（データ行）のD列（資産種類名）を分類
           // メタヘッダー6行 + ヘッダー行1行 = 7行目まで、8行目以降がデータ行
-          // すべてのデータ行に対して資産種類コードを分類
+          // まず条件分岐で判定、判定できない場合のみGemini APIを使用
           let assetTypeCode = "";
           if (kamoku) {
-            assetTypeCode = await classifyAssetType(kamoku);
+            try {
+              // 条件分岐で判定を試みる
+              const codeByRule = classifyAssetTypeByRule(kamoku);
+              if (codeByRule) {
+                assetTypeCode = codeByRule;
+              } else {
+                // 条件分岐で判定できない場合のみGemini APIを使用
+                assetTypeCode = await classifyAssetTypeByGemini(kamoku);
+                geminiCount++;
+                // レート制限対策: リクエスト間に短い遅延を追加
+                if (i < detailRows.length - 1) {
+                  await new Promise((resolve) => setTimeout(resolve, 200)); // 200ms待機
+                }
+              }
+            } catch (error) {
+              console.error(
+                `資産種類コードの分類に失敗しました (行 ${i + 1}):`,
+                error
+              );
+              // エラーが発生しても処理を続行
+              assetTypeCode = "";
+            }
           }
 
           outRow[0] = String(assetCounter++); // 資産コード: 0埋めしない
@@ -573,6 +865,21 @@ export default function AssetConverterTool() {
           outRow[33] = 差引取得価額;
 
           outputData.push(outRow);
+
+          // 進捗を更新
+          if ((i + 1) % 10 === 0 || i === detailRows.length - 1) {
+            const geminiInfo =
+              geminiCount > 0 ? ` (Gemini使用: ${geminiCount}件)` : "";
+            showMessage(
+              `${i + 1}/${
+                detailRows.length
+              }件のデータを処理中... 資産種類コードを分類しています...${geminiInfo}`,
+              {
+                backgroundColor: "#dbeafe",
+                color: "#1e40af",
+              }
+            );
+          }
         }
 
         setConvertedRows(outputData);
