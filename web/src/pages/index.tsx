@@ -1046,8 +1046,12 @@ export default function AssetConverterTool() {
     const bodyRows = convertedRows.map((row) =>
       row
         .map((v, index) => {
-          // C列（資産種類コード、インデックス2）は数値として扱う
-          if (index === 2) {
+          // 数値として扱う列（クォートなしで出力）
+          // インデックス2: 資産種類コード
+          // インデックス17: 耐用年数
+          // インデックス26: 償却期間の月数
+          // インデックス28: 取得価額
+          if (index === 2 || index === 17 || index === 26 || index === 28) {
             // 空の場合は空文字列を返す
             if (!v || v.trim() === "") {
               return `""`;
