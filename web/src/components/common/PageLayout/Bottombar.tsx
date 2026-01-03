@@ -8,12 +8,7 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import React from "react";
-import {
-  themeColor,
-  themeColorDeep,
-  anRed,
-  themeColorSuperLight,
-} from "@/utils/colors";
+import { themeColorDeep, anRed, themeColorSuperLight } from "@/utils/colors";
 
 const Bottombar: React.FC = () => {
   const router = useRouter();
@@ -66,156 +61,157 @@ const Bottombar: React.FC = () => {
         }}
         className="bottombar"
       >
-      <div
-        key="/"
-        onClick={() => handleMenuClick({ key: "/" } as any)}
-        style={{
-          ...baseButtonStyle,
-          ...(currentPath === "/" ? activeStyle : {}),
-        }}
-      >
-        <HomeOutlined
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: "20px",
-          }}
-        />
         <div
+          key="/"
+          onClick={() => handleMenuClick({ key: "/" } as any)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            fontSize: "11px",
-            fontWeight: "bold",
-            height: "20px",
+            ...baseButtonStyle,
+            ...(currentPath === "/" ? activeStyle : {}),
           }}
         >
-          ホーム
+          <HomeOutlined
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "20px",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              height: "20px",
+            }}
+          >
+            ホーム
+          </div>
         </div>
-      </div>
-      <div
-        key="/events"
-        onClick={() => handleMenuClick({ key: "/events" } as any)}
-        style={{
-          ...baseButtonStyle,
-          ...(currentPath === "/events" ? activeStyle : {}),
-        }}
-      >
-        <CalendarOutlined
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: "20px",
-          }}
-        />
         <div
+          key="/events"
+          onClick={() => handleMenuClick({ key: "/events" } as any)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            fontSize: "11px",
-            fontWeight: "bold",
-            height: "20px",
+            ...baseButtonStyle,
+            ...(currentPath === "/events" ? activeStyle : {}),
           }}
         >
-          イベント
+          <CalendarOutlined
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "20px",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              height: "20px",
+            }}
+          >
+            イベント
+          </div>
         </div>
-      </div>
-      <div
-        key="/venues"
-        onClick={() => handleMenuClick({ key: "/venues" } as any)}
-        style={{
-          ...baseButtonStyle,
-          ...(currentPath === "/venues" ? activeStyle : {}),
-        }}
-      >
-        <EnvironmentOutlined
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: "20px",
-          }}
-        />
         <div
+          key="/venues"
+          onClick={() => handleMenuClick({ key: "/venues" } as any)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            fontSize: "11px",
-            fontWeight: "bold",
-            height: "20px",
+            ...baseButtonStyle,
+            ...(currentPath === "/venues" ? activeStyle : {}),
           }}
         >
-          会場
+          <EnvironmentOutlined
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "20px",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              height: "20px",
+            }}
+          >
+            会場
+          </div>
         </div>
-      </div>
-      <div
-        key="/creators"
-        onClick={() => handleMenuClick({ key: "/creators" } as any)}
-        style={{
-          ...baseButtonStyle,
-          ...(currentPath === "/creators" ? activeStyle : {}),
-        }}
-      >
-        <TeamOutlined
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: "20px",
-          }}
-        />
         <div
+          key="/creators"
+          onClick={() => handleMenuClick({ key: "/creators" } as any)}
           style={{
-            display: "flex",
-            alignItems: "center",
-            fontSize: "11px",
-            fontWeight: "bold",
-            height: "20px",
+            ...baseButtonStyle,
+            ...(currentPath === "/creators" ? activeStyle : {}),
           }}
         >
-          クリエイター
+          <TeamOutlined
+            style={{
+              display: "flex",
+              alignItems: "center",
+              height: "20px",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              height: "20px",
+            }}
+          >
+            クリエイター
+          </div>
         </div>
-      </div>
-      <div
-        key="logout"
-        onClick={() => handleMenuClick({ key: "logout" } as any)}
-        style={baseButtonStyle}
-      >
-        <LogoutOutlined
-          style={{
-            display: "flex",
-            alignItems: "center",
-            color: anRed,
-            height: "20px",
-          }}
-        />
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            fontSize: "11px",
-            fontWeight: "bold",
-            color: anRed,
-            height: "20px",
-          }}
+          key="logout"
+          onClick={() => handleMenuClick({ key: "logout" } as any)}
+          style={baseButtonStyle}
         >
-          ログアウト
+          <LogoutOutlined
+            style={{
+              display: "flex",
+              alignItems: "center",
+              color: anRed,
+              height: "20px",
+            }}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "11px",
+              fontWeight: "bold",
+              color: anRed,
+              height: "20px",
+            }}
+          >
+            ログアウト
+          </div>
         </div>
-      </div>
-      <style jsx global>{`
-        @media (max-width: 768px) {
-          .bottombar {
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            margin-bottom: 0 !important;
-            z-index: 1000 !important;
-            width: 100% !important;
+        <style jsx global>{`
+          @media (max-width: 768px) {
+            .bottombar {
+              position: fixed !important;
+              bottom: 0 !important;
+              left: 0 !important;
+              right: 0 !important;
+              margin-bottom: 0 !important;
+              z-index: 1000 !important;
+              width: 100% !important;
+            }
+            body {
+              padding-bottom: 60px !important;
+            }
           }
-          body {
-            padding-bottom: 60px !important;
-          }
-        }
-      `}</style>
+        `}</style>
+      </div>
     </>
   );
 };
