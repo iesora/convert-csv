@@ -1,261 +1,496 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
+import React, { useCallback, useRef, useState } from "react";
 import PageLayout from "@/components/common/PageLayout";
 
-type RowData = Record<string, string>;
+type ConvertedRow = string[];
 
-const TARGET_HEADERS = [
-  "スタッフコード",
-  "姓",
-  "名",
-  "支給日",
-  "給与規定グループ名",
-  "基本給",
-  "課税通勤手当",
-  "非課税通勤手当",
-  "残業手当",
-  "深夜労働手当",
-  "休日労働手当",
-  "欠勤控除",
-  "遅刻早退控除",
-  "歩合給",
-  "年末調整分",
-  "賞与",
-  "年末調整",
-  "健康保険料",
-  "介護保険料",
-  "厚生年金保険料",
-  "雇用保険料",
-  "所得税",
-  "住民税",
-  "年末調整精算用",
-  "備考",
-] as const;
+const TARGET_HEADER_LIST = [
+  "資産コード",
+  "分割コード",
+  "資産種類コード",
+  "資産種類名",
+  "償却方法",
+  "資本的支出区分",
+  "本支店コード",
+  "部門コード",
+  "申告先地域コード",
+  "決算書連動先",
+  "資産名称",
+  "構造名",
+  "細目名",
+  "取得年月日",
+  "供用年月日",
+  "数量",
+  "単位",
+  "耐用年数",
+  "耐用年数短縮",
+  "耐用年数短縮(保証額未満)[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "耐用年数(地方税計算用)",
+  "償却率",
+  "経過措置",
+  "経過リース期間定額法を適用する",
+  "経過リース期間定額法を採用した事業年度(開始)",
+  "経過リース期間定額法を採用した事業年度(終了)",
+  "償却期間の月数",
+  "取得価額(入力)",
+  "取得価額",
+  "圧縮記帳の経理方式",
+  "圧縮記帳額",
+  "期首圧縮記帳引当金残高",
+  "引当金期中取崩額",
+  "差引取得価額",
+  "残存価額 率",
+  "残存価額(入力)",
+  "残存価額",
+  "残存価額(入力)[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "残存価額[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "償却可能限度額 率",
+  "償却可能限度額(入力)",
+  "償却可能限度額",
+  "償却可能限度額(入力)[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "償却可能限度額[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "償却月数(入力)",
+  "償却月数",
+  "相続合併(入力フラグ)",
+  "期首帳簿価額",
+  "期首帳簿価額(償却方法変更・耐用年数短縮・定率法経過措置用)",
+  "期首帳簿価額(〃)[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "残存簿価(入力)",
+  "残存簿価",
+  "改定取得価額(入力)",
+  "改定取得価額",
+  "改定取得価額(入力)[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "改定取得価額[圧縮記帳(引当金・積立金)の場合の償却額計算用]",
+  "償却計算の基礎となる額",
+  "算出償却額(入力)",
+  "算出償却額",
+  "期首償却過不足額",
+  "増加償却割合",
+  "増加償却額(入力)",
+  "増加償却額",
+  "特別償却区分",
+  "適用条項 条",
+  "適用条項 項",
+  "特別償却割合",
+  "特別償却金額(入力)",
+  "特別償却金額",
+  "経理処理区分",
+  "当期償却限度額",
+  "当期償却額(入力)",
+  "当期償却額",
+  "償却過不足額",
+  "償却実施率",
+  "事業専用割合(分子)",
+  "事業専用割合(分母)",
+  "除却年月日",
+  "除却時の計算方法",
+  "除却区分",
+  "除売却価額",
+  "有姿除却年月日",
+  "有姿除却時の計算方法",
+  "有姿除却 処分見込価額",
+  "有姿除却(処分)年月日",
+  "前期除却区分",
+  "期末帳簿価額",
+  "期末引当金額",
+  "償却累計額",
+  "販売管理費 分子",
+  "販売管理費 分母",
+  "販売管理費",
+  "製造原価 分子",
+  "製造原価 分母",
+  "製造原価",
+  "営業外費用 分子",
+  "営業外費用 分母",
+  "営業外費用",
+  "償却資産種類",
+  "地域移動",
+  "地域移動 地域コード(前回)",
+  "償却資産資産コード(入力)",
+  "償却資産資産コード",
+  "償却資産用取得価額 入力フラグ",
+  "償却資産用取得価額 手入力",
+  "種類別明細書取得年月日(入力)",
+  "種類別明細書取得年月日",
+  "取得年月(入力)",
+  "取得年月(元号)",
+  "取得年月(年月)",
+  "摘要全資産等(1)",
+  "摘要全資産等(2)",
+  "摘要減少(1)",
+  "摘要減少(2)",
+  "前回申告未実施",
+  "前回の評価額(入力)",
+  "前回の評価額",
+  "今回の評価額(入力)",
+  "今回の評価額",
+  "課税標準の特例(分子)",
+  "課税標準の特例(分母)",
+  "特例の適用終了年度",
+  "増加事由(入力)",
+  "増加事由",
+  "減少事由(入力)",
+  "減少事由",
+  "減少区分(入力)",
+  "減少区分",
+  "当期減損処理設定",
+  "減損年月日(当期)",
+  "減損損失計上(当期)",
+  "減損前帳簿価額(当期)(入力)",
+  "減損前帳簿価額(当期)",
+  "減損損失額(当期)",
+  "減損後帳簿価額(当期)",
+  "減損後耐用年数(当期)(入力)",
+  "減損後耐用年数(当期)",
+  "減損後償却率(当期)(入力)",
+  "減損後償却率 (当期)",
+  "減損後残存価額(当期)(入力)",
+  "減損後残存価額(当期)",
+  "減損損失累計額(当期)",
+  "過年度減損処理設定",
+  "最終減損年月日(過年度)",
+  "減損損失計上(過年度)",
+  "減損後帳簿価額(過年度)",
+  "減損損失累計額(過年度)",
+  "減損後耐用年数(過年度)",
+  "減損後償却率(過年度)(入力)",
+  "減損後償却率 (過年度)",
+  "減損後残存価額(過年度)(入力)",
+  "減損後残存価額(過年度)",
+  "減損後改定取得価額(過年度)",
+  "計算の基礎となる額(過年度)(入力)",
+  "計算の基礎となる額(過年度)",
+  "資産グループコード",
+  "経過措置(減損用)",
+  "耐用年数短縮(減損用)",
+  "計算用の帳簿価額",
+  "計算用の耐用年数",
+  "メモ欄上段",
+  "メモ欄中段",
+  "メモ欄下段",
+  "資産除去債務を計上する",
+  "計上年月日",
+  "除去債務_耐用年数(入力)",
+  "除去債務_耐用年数",
+  "見積額",
+  "見積期末調整額",
+  "割引率",
+  "資産除去債務(入力)",
+  "資産除去債務",
+  "期首資産除去債務額",
+  "利息費用(入力)",
+  "利息費用",
+  "利息費用 端数処理",
+  "除去債務期末調整額",
+  "過年度除去債務調整あり",
+  "資産除去債務履行費用",
+  "除去債務_取得価額(入力)",
+  "除去債務_取得価額",
+  "除去債務_残存価額(入力)",
+  "除去債務_残存価額",
+  "除去債務_改定取得価額(入力)",
+  "除去債務_改定取得価額",
+  "変更した事業年度開始の日における帳簿価額",
+  "除去債務_期首帳簿価額",
+  "除去債務_当期償却額(入力)",
+  "除去債務_当期償却額",
+  "簿価期末調整額",
+  "割引現在価値 端数処理１",
+  "割引現在価値 端数処理２",
+  "備考上段",
+  "備考下段",
+  "稼働状態(No.1)",
+  "稼働状態(No.2)",
+  "稼働状態(No.3)",
+  "稼働状態(No.4)",
+  "稼働状態(No.5)",
+  "稼働状態(No.6)",
+  "稼働状態(No.7)",
+  "稼働状態(No.8)",
+  "稼働状態(No.9)",
+  "稼働状態(No.10)",
+  "稼働状態(No.11)",
+  "稼働状態(No.12)",
+  "稼働状態(翌期首)",
+  "当期償却額の計上",
+  "月次端数処理",
+  "月次端数計算",
+  "遊休月端数",
+  "資産コード(リース資産)",
+  "分割コード(リース資産)",
+  "資産種類コード(リース資産)",
+  "資産種類名(リース資産)",
+  "資産名称(リース資産)",
+  "リース資産区分",
+  "契約番号",
+  "数量(リース資産)",
+  "単位(リース資産)",
+  "支払間隔",
+  "支払回数",
+  "支払区分",
+  "契約開始日",
+  "契約終了日",
+  "支払開始日",
+  "消費税控除",
+  "利息区分",
+  "未経過リース料集計区分",
+  "支払リース料",
+  "外 消費税(支払リース料)",
+  "支払リース料総額(入力)",
+  "支払リース料総額",
+  "外 消費税(支払リース料総額)(入力)",
+  "外 消費税(支払リース料総額)",
+  "残価保証額",
+  "割引率(リース資産)",
+  "現在価値",
+  "計上価額(入力)",
+  "計上価額",
+  "期首支払済回数",
+  "期首支払リース料残高",
+  "外 消費税(期首支払リース料残高)",
+  "期首元本相当額",
+  "期首消費税債務",
+  "当期支払リース料",
+  "外 消費税(当期支払リース料)",
+  "年利子率(入力)",
+  "年利子率",
+  "当期利息相当額",
+  "消費税債務減少額",
+  "解約年月日",
+  "割引現在価値 端数処理１(リース資産)",
+  "割引現在価値 端数処理２(リース資産)",
+  "本支店コード(リース資産)",
+  "部門コード(リース資産)",
+  "備考１",
+  "備考２",
+  "備考３",
+  "当期支払リース料内訳　入力チェック(1)",
+  "当期支払リース料内訳　支払リース料(1)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(1)",
+  "当期支払リース料内訳　元本返済相当額(1)",
+  "当期支払リース料内訳　消費税債務(1)",
+  "当期支払リース料内訳　入力チェック(2)",
+  "当期支払リース料内訳　支払リース料(2)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(2)",
+  "当期支払リース料内訳　元本返済相当額(2)",
+  "当期支払リース料内訳　消費税債務(2)",
+  "当期支払リース料内訳　入力チェック(3)",
+  "当期支払リース料内訳　支払リース料(3)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(3)",
+  "当期支払リース料内訳　元本返済相当額(3)",
+  "当期支払リース料内訳　消費税債務(3)",
+  "当期支払リース料内訳　入力チェック(4)",
+  "当期支払リース料内訳　支払リース料(4)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(4)",
+  "当期支払リース料内訳　元本返済相当額(4)",
+  "当期支払リース料内訳　消費税債務(4)",
+  "当期支払リース料内訳　入力チェック(5)",
+  "当期支払リース料内訳　支払リース料(5)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(5)",
+  "当期支払リース料内訳　元本返済相当額(5)",
+  "当期支払リース料内訳　消費税債務(5)",
+  "当期支払リース料内訳　入力チェック(6)",
+  "当期支払リース料内訳　支払リース料(6)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(6)",
+  "当期支払リース料内訳　元本返済相当額(6)",
+  "当期支払リース料内訳　消費税債務(6)",
+  "当期支払リース料内訳　入力チェック(7)",
+  "当期支払リース料内訳　支払リース料(7)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(7)",
+  "当期支払リース料内訳　元本返済相当額(7)",
+  "当期支払リース料内訳　消費税債務(7)",
+  "当期支払リース料内訳　入力チェック(8)",
+  "当期支払リース料内訳　支払リース料(8)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(8)",
+  "当期支払リース料内訳　元本返済相当額(8)",
+  "当期支払リース料内訳　消費税債務(8)",
+  "当期支払リース料内訳　入力チェック(9)",
+  "当期支払リース料内訳　支払リース料(9)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(9)",
+  "当期支払リース料内訳　元本返済相当額(9)",
+  "当期支払リース料内訳　消費税債務(9)",
+  "当期支払リース料内訳　入力チェック(10)",
+  "当期支払リース料内訳　支払リース料(10)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(10)",
+  "当期支払リース料内訳　元本返済相当額(10)",
+  "当期支払リース料内訳　消費税債務(10)",
+  "当期支払リース料内訳　入力チェック(11)",
+  "当期支払リース料内訳　支払リース料(11)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(11)",
+  "当期支払リース料内訳　元本返済相当額(11)",
+  "当期支払リース料内訳　消費税債務(11)",
+  "当期支払リース料内訳　入力チェック(12)",
+  "当期支払リース料内訳　支払リース料(12)",
+  "当期支払リース料内訳　外 消費税(支払リース料)(12)",
+  "当期支払リース料内訳　元本返済相当額(12)",
+  "当期支払リース料内訳　消費税債務(12)",
+];
 
-// 和暦(令和)を西暦YYYY-MM-DDに変換
-function convertWarekiToSeireki(warekiStr: string): string {
-  if (!warekiStr) return "";
-  const match = warekiStr.match(/令和(\d+)年(\d+)月(\d+)日/);
+function warekiToYYYYMMDD(str: string): string {
+  if (!str) return "";
+  const cleanStr = str.replace(/["\s]/g, "");
+  const match = cleanStr.match(/(?:令和|令)(\d+)年(\d+)月(\d+)日/);
   if (match) {
-    const year = parseInt(match[1], 10) + 2018;
+    const year = (parseInt(match[1]) + 2018).toString();
     const month = match[2].padStart(2, "0");
     const day = match[3].padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return `${year}${month}${day}`;
   }
-  return warekiStr.replace(/支給日：\s*/, "").trim();
+  const dateOnly = cleanStr.replace(/[^0-9]/g, "");
+  if (dateOnly.length === 8) return dateOnly;
+  return cleanStr;
 }
 
-function parseSalarySheet(sheetArray: unknown[][]): RowData {
-  console.log("[parseSalarySheet] sheetArray: ", sheetArray);
-  const getVal = (r: number, c: number) => {
-    try {
-      const raw = sheetArray?.[r]?.[c];
-      const val = raw !== undefined && raw !== null ? String(raw).trim() : "";
-      return val === "undefined" ? "" : val;
-    } catch {
-      return "";
-    }
-  };
-  // 文字のゆれを潰して比較用キーにする（全角半角、空白、コロンなど）
-  const norm = (s: string) =>
-    (s ?? "")
-      .toString()
-      .normalize("NFKC")
-      .trim()
-      .replace(/[ 　\t\r\n]+/g, "") // 空白類を除去
-      .replace(/[：:]/g, ""); // コロンを除去（あってもなくても一致させる）
+function cleanNumber(str: string | undefined | null): string {
+  if (str === undefined || str === null || str.trim() === "") return "";
+  const cleaned = str.replace(/[^0-9.-]/g, "");
+  return cleaned === "" ? "" : cleaned;
+}
 
-  // ラベル -> (row, col) の索引を1回で作る（最初に見つかった場所を採用）
-  const labelIndex = new Map<string, { r: number; c: number }>();
-  for (let r = 0; r < (sheetArray?.length ?? 0); r++) {
-    const row = sheetArray?.[r] ?? [];
-    for (let c = 0; c < row.length; c++) {
-      const key = norm(getVal(r, c));
-      if (!key) continue;
-      if (!labelIndex.has(key)) labelIndex.set(key, { r, c });
+function parseCsvLine(line: string): string[] {
+  const result: string[] = [];
+  let cur = "";
+  let inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuote && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuote = !inQuote;
+      }
+    } else if (char === "," && !inQuote) {
+      result.push(cur.trim());
+      cur = "";
+    } else {
+      cur += char;
     }
   }
-  const getBelowByLabels = (
-    labels: string[] | string,
-    opt?: { defaultValue?: string; allowContainsFallback?: boolean }
-  ) => {
-    const defaultValue = opt?.defaultValue ?? "";
-    const allowContainsFallback = opt?.allowContainsFallback ?? true;
-
-    const arr = Array.isArray(labels) ? labels : [labels];
-
-    // 1) まずは完全一致（正規化後）
-    for (const label of arr) {
-      const hit = labelIndex.get(norm(label));
-      if (hit) {
-        return getVal(hit.r + 1, hit.c) || defaultValue;
-      }
-    }
-
-    // 2) 見つからない場合、セル側に余計な文字が付くケースのため contains fallback
-    //    例: "基本給(課税)" のようなセルでも "基本給" で拾える
-    if (allowContainsFallback) {
-      const keys = [...labelIndex.keys()];
-      for (const label of arr) {
-        const nk = norm(label);
-        const foundKey = keys.find((k) => k.includes(nk));
-        if (foundKey) {
-          const hit = labelIndex.get(foundKey)!;
-          return getVal(hit.r + 1, hit.c) || defaultValue;
-        }
-      }
-    }
-
-    return defaultValue;
-  };
-
-  const fullName = getVal(6, 1).replace(/　様$/, "").replace(/様$/, "").trim();
-
-  // 姓名分割（全角・半角スペース両方対応）
-  const nameParts = fullName.split(/[\s　]+/);
-  const sei = nameParts[0] || "";
-  const mei = nameParts.slice(1).join(" ") || "";
-
-  const row: RowData = {
-    スタッフコード: "", // 明細にないため空
-    姓: sei,
-    名: mei,
-    基本給: getBelowByLabels("基本給", { defaultValue: "0" }),
-    課税通勤手当: getBelowByLabels(["課税通勤手当", "課税交通費"], {
-      defaultValue: "0",
-    }),
-    非課税通勤手当: getBelowByLabels(["非課税通勤手当", "非課税交通費"], {
-      defaultValue: "0",
-    }),
-
-    残業手当: getBelowByLabels(["残業手当", "時間外手当"], {
-      defaultValue: "0",
-    }),
-    深夜労働手当: getBelowByLabels(["深夜労働手当", "深夜手当"], {
-      defaultValue: "0",
-    }),
-    休日労働手当: getBelowByLabels(["休日労働手当", "休日手当"], {
-      defaultValue: "0",
-    }),
-
-    欠勤控除: getBelowByLabels(["欠勤控除", "欠勤"], { defaultValue: "0" }),
-    遅刻早退控除: getBelowByLabels(["遅刻早退控除", "遅刻早退"], {
-      defaultValue: "0",
-    }),
-    歩合給: getBelowByLabels(["歩合給", "処遇改善加算"], { defaultValue: "0" }),
-
-    年末調整分: getBelowByLabels(["年末調整分", "年末調整"], {
-      defaultValue: "0",
-    }),
-    賞与: getBelowByLabels(["賞与", "ボーナス"], { defaultValue: "0" }),
-    年末調整: getBelowByLabels(["年末調整", "年末調整額"], {
-      defaultValue: "",
-    }),
-
-    健康保険料: getBelowByLabels(["健康保険料", "健康保険"], {
-      defaultValue: "0",
-    }),
-    介護保険料: getBelowByLabels(["介護保険料", "介護保険"], {
-      defaultValue: "0",
-    }),
-    厚生年金保険料: getBelowByLabels(["厚生年金保険料", "厚生年金"], {
-      defaultValue: "0",
-    }),
-    雇用保険料: getBelowByLabels(["雇用保険料", "雇用保険"], {
-      defaultValue: "0",
-    }),
-
-    所得税: getBelowByLabels(["所得税", "源泉所得税"], { defaultValue: "0" }),
-    住民税: getBelowByLabels(["住民税", "市町村民税"], { defaultValue: "0" }),
-
-    年末調整精算用: getBelowByLabels(["年末調整精算用", "年末調整精算"], {
-      defaultValue: "0",
-    }),
-
-    支給日: convertWarekiToSeireki(getVal(0, 24) || getVal(0, 21)),
-    給与規定グループ名: "",
-
-    備考: getVal(11, 0)
-      .replace(/　給与明細書$/, "")
-      .trim(),
-  };
-
-  return row;
+  result.push(cur.trim());
+  return result;
 }
 
-async function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
-  return await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as ArrayBuffer);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-export default function SalaryConverterTool() {
+export default function AssetConverterTool() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const [isDragOver, setIsDragOver] = useState(false);
   const [status, setStatus] = useState<{
     text: string;
-    colorClass: string;
+    style: React.CSSProperties;
   } | null>(null);
-  const [convertedData, setConvertedData] = useState<RowData[]>([]);
+  const [convertedRows, setConvertedRows] = useState<ConvertedRow[]>([]);
+  const [showResult, setShowResult] = useState(false);
 
-  const hasResult = convertedData.length > 0;
-
-  const showMessage = useCallback((text: string, colorClass: string) => {
-    setStatus({ text, colorClass });
+  const showMessage = useCallback((msg: string, style: React.CSSProperties) => {
+    setStatus({ text: msg, style });
   }, []);
 
-  const handleFile = useCallback(
-    async (file: File) => {
-      showMessage("詳細データを解析中...", "text-blue-600");
+  const showError = useCallback(
+    (msg: string) => {
+      showMessage(msg, {
+        backgroundColor: "#fee2e2",
+        color: "#991b1b",
+        border: "1px solid #fecaca",
+      });
+    },
+    [showMessage]
+  );
+
+  const processContent = useCallback(
+    (content: string) => {
       try {
-        const buffer = await readFileAsArrayBuffer(file);
-        const data = new Uint8Array(buffer);
-        const workbook = XLSX.read(data, { type: "array" });
+        const lines = content.split(/\r?\n/);
+        const outputData: ConvertedRow[] = [];
+        let assetCounter = 1;
 
-        const results: RowData[] = [];
+        lines.forEach((line) => {
+          if (!line.trim()) return;
+          const cols = parseCsvLine(line);
+          if (cols[0] === "[明細行]") {
+            const outRow = new Array(TARGET_HEADER_LIST.length).fill(
+              ""
+            ) as string[];
 
-        workbook.SheetNames.forEach((sheetName: string) => {
-          const worksheet = workbook.Sheets[sheetName];
-          const sheetArray = XLSX.utils.sheet_to_json<unknown[]>(worksheet, {
-            header: 1,
-            defval: "",
-          }) as unknown[][];
+            const kamoku = cols[3] || "";
+            const name = cols[9] || "";
+            const 取得日 = warekiToYYYYMMDD(cols[12]);
+            const 供用日 = warekiToYYYYMMDD(cols[13]);
+            const 取得価額 = cleanNumber(cols[23]);
+            const 圧縮記帳額 = cleanNumber(cols[24]);
+            const 差引取得価額 = cleanNumber(cols[25]);
+            const 耐用年数 = cleanNumber(cols[20]);
+            const 償却率 = cleanNumber(cols[21]);
+            const 償却実施率 = cleanNumber(cols[22]);
+            const 数量 = cleanNumber(cols[10]);
+            const 単位 = cols[11] || "";
 
-          if (!sheetArray || sheetArray.length < 15) return;
+            outRow[0] = String(assetCounter++).padStart(4, "0");
+            outRow[1] = "01";
+            outRow[2] = "";
+            outRow[3] = kamoku;
+            outRow[4] = cols[19] === "即時償却" ? "少額資産" : "定額法";
+            outRow[10] = name;
+            outRow[13] = 取得日;
+            outRow[14] = 供用日;
+            outRow[15] = 数量;
+            outRow[16] = 単位;
+            outRow[17] = 耐用年数;
+            outRow[21] = 償却率;
+            outRow[74] = 償却実施率;
+            outRow[27] = 取得価額;
+            outRow[28] = 取得価額;
+            outRow[30] = 圧縮記帳額;
+            outRow[33] = 差引取得価額;
 
-          const extracted = parseSalarySheet(sheetArray);
-          if (extracted["姓"]) results.push(extracted);
+            outputData.push(outRow);
+          }
         });
 
-        if (results.length === 0) {
-          setConvertedData([]);
-          showMessage(
-            "有効な給与明細データが検出できませんでした。",
-            "text-red-600"
-          );
+        if (outputData.length === 0) {
+          showError("有効なデータが見つかりませんでした。");
           return;
         }
 
-        setConvertedData(results);
-        showMessage(
-          `抽出完了: ${results.length}名分のデータを集計フォーマットに変換しました。`,
-          "text-green-600"
+        setConvertedRows(outputData);
+        showMessage(`${outputData.length}件のデータを正常に変換しました。`, {
+          backgroundColor: "#dcfce7",
+          color: "#166534",
+        });
+        setShowResult(true);
+      } catch (err) {
+        showError(
+          "処理中にエラーが発生しました: " +
+            (err instanceof Error ? err.message : String(err))
         );
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-        setConvertedData([]);
-        showMessage("解析中にエラーが発生しました。", "text-red-600");
-      } finally {
-        // 同じファイルをもう一度選べるようにクリア
-        if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [showMessage]
+    [showMessage, showError]
+  );
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      showMessage("ファイルを読み込み中...", {
+        backgroundColor: "#dbeafe",
+        color: "#1e40af",
+      });
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (!e.target) return;
+        const content = e.target.result as string;
+        if (!content.includes("[明細行]")) {
+          const utf8Reader = new FileReader();
+          utf8Reader.onload = (ev) => {
+            if (!ev.target) return;
+            processContent(ev.target.result as string);
+          };
+          utf8Reader.readAsText(file, "UTF-8");
+        } else {
+          processContent(content);
+        }
+      };
+      reader.readAsText(file, "Shift-JIS");
+    },
+    [showMessage, processContent]
   );
 
   const onPickFile = useCallback(() => {
@@ -290,432 +525,403 @@ export default function SalaryConverterTool() {
   );
 
   const downloadCsv = useCallback(() => {
-    if (!hasResult) return;
+    if (convertedRows.length === 0) return;
 
-    const csvRows: string[] = [TARGET_HEADERS.join(",")];
+    const metaHeader = [
+      "バージョン=1.9.0.10(FILEVERSION=1.13)",
+      "顧問先コード=002",
+      "顧問先名称=株式会社二垣経営研究所",
+      "法人個人区分=法人",
+      "事業年度開始日=20250101",
+      "事業年度終了日=20251231",
+    ];
 
-    convertedData.forEach((row) => {
-      const values = TARGET_HEADERS.map((h) => {
-        const val = String(row[h] || "");
-        return `"${val.replace(/"/g, '""')}"`;
-      });
-      csvRows.push(values.join(","));
-    });
+    const headerRow = ";" + TARGET_HEADER_LIST.join(",");
+    const bodyRows = convertedRows.map((row) =>
+      row.map((v) => `"${v}"`).join(",")
+    );
+    const fullContent =
+      metaHeader.join("\r\n") +
+      "\r\n" +
+      headerRow +
+      "\r\n" +
+      bodyRows.join("\r\n");
 
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    const blob = new Blob([bom, csvRows.join("\n")], {
+    const blob = new Blob([bom, fullContent], {
       type: "text/csv;charset=utf-8;",
     });
-
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `給与集計データ_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `二垣形式_資産データ_${new Date()
+      .toISOString()
+      .slice(0, 10)
+      .replace(/-/g, "")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [convertedData, hasResult]);
-
-  const specBadges = useMemo(
-    () => [
-      "姓名の自動分割",
-      "和暦→西暦変換",
-      "社会保険/税金の抽出",
-      "処遇改善加算→歩合給",
-    ],
-    []
-  );
+  }, [convertedRows]);
 
   return (
     <PageLayout>
       <div
         style={{
-          //   backgroundColor: "#f3f4f6", // bg-gray-100
+          backgroundColor: "#f8fafc",
           minHeight: "100vh",
-          fontFamily:
-            "'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, sans-serif",
         }}
       >
+        <style jsx>{`
+          .drop-zone {
+            transition: all 0.3s ease;
+          }
+          .drop-zone.dragover {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+          }
+          .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+          }
+          thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f8fafc;
+          }
+        `}</style>
         <div
           style={{
-            maxWidth: "56rem", // max-w-4xl
+            maxWidth: "56rem",
             margin: "0 auto",
-            paddingTop: "2.5rem", // py-10
-            paddingBottom: "2.5rem",
-            paddingLeft: "0.5rem", // px-2
-            paddingRight: "0.5rem",
-            boxSizing: "border-box",
+            paddingTop: "3rem",
+            paddingBottom: "3rem",
+            paddingLeft: "1rem",
+            paddingRight: "1rem",
           }}
         >
-          {/* ヘッダー */}
-          <header
-            style={{
-              textAlign: "center",
-              marginBottom: "2rem", // mb-8
-            }}
-          >
+          <header style={{ textAlign: "center", marginBottom: "2.5rem" }}>
             <h1
               style={{
-                fontSize: "2rem", // text-2xl
+                fontSize: "1.875rem",
                 fontWeight: 700,
-                color: "#1f2937", // text-gray-800
-                marginBottom: "0.5rem", // mb-2
-                letterSpacing: "-0.01em",
+                color: "#1e293b",
+                marginBottom: "0.5rem",
               }}
             >
-              給与データ集計ツール
+              資産データ変換ツール
             </h1>
-            <p
-              style={{
-                fontSize: "1rem", // text-base
-                color: "#6b7280", // text-gray-500
-              }}
-            >
-              個別明細Excelを読み込み、指定の集計用フォーマットCSVに変換します
+            <p style={{ color: "#475569" }}>
+              弥生形式の資産一覧表を、指定のフルフォーマットCSVに変換します
             </p>
           </header>
 
-          {/* 仕様バッジ */}
           <div
+            id="dropZone"
+            className={`drop-zone ${isDragOver ? "dragover" : ""}`}
             style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb", // border-gray-200
-              borderRadius: "0.5rem", // rounded-lg
-              padding: "1.5rem", // p-6 (since md:p-6)
-              marginBottom: "2rem", // mb-8
-              boxShadow:
-                "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px 0 rgba(0,0,0,0.01)", // shadow
+              border: "2px dashed",
+              borderColor: isDragOver ? "#3b82f6" : "#cbd5e1",
+              borderRadius: "1rem",
+              padding: "4rem",
+              textAlign: "center",
+              backgroundColor: isDragOver ? "#eff6ff" : "#fff",
+              cursor: "pointer",
+              boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+              transition: "all 0.3s ease",
             }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "0.5rem", // mb-2
-                gap: "0.5rem",
-              }}
-            >
-              <svg
-                width={10}
-                height={10}
-                style={{ color: "#3b82f6" }}
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
-              </svg>
-              <h2
-                style={{
-                  fontSize: "0.875rem", // text-sm
-                  fontWeight: "bold",
-                  color: "#374151", // text-gray-700
-                  margin: 0,
-                }}
-              >
-                出力フォーマットの仕様
-              </h2>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))", // sm:grid-cols-4
-                gap: "0.5rem",
-                fontSize: "0.875rem", // text-xs
-                color: "#6b7280", // text-gray-500
-              }}
-            >
-              {specBadges.map((t) => (
-                <div
-                  key={t}
-                  style={{
-                    background: "#f9fafb", // bg-gray-50
-                    padding: "0.25rem 0.5rem", // px-2 py-1
-                    borderRadius: "0.25rem",
-                    textAlign: "center",
-                    border: "1px solid #f3f4f6", // border-gray-100
-                  }}
-                >
-                  {t}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ファイルアップロードエリア */}
-          <div
-            role="button"
-            tabIndex={0}
             onClick={onPickFile}
             onDragOver={onDragOver}
             onDragLeave={onDragLeave}
             onDrop={onDrop}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onPickFile();
-            }}
-            style={{
-              borderWidth: "2px",
-              borderStyle: "dashed",
-              borderRadius: "0.75rem",
-              paddingTop: "3rem",
-              paddingBottom: "3rem",
-              paddingLeft: "1rem",
-              paddingRight: "1rem",
-              textAlign: "center",
-              background: "#fff",
-              cursor: "pointer",
-              boxShadow:
-                "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px 0 rgba(0,0,0,0.01)",
-              borderColor: isDragOver ? "#3b82f6" : "#d1d5db", // blue-500 or gray-300
-              transition: "border-color 0.15s, background 0.15s",
-              outline: "none",
-              marginBottom: "0",
-            }}
           >
             <input
               ref={fileInputRef}
               type="file"
               style={{ display: "none" }}
-              accept=".xlsx,.xls"
+              accept=".csv"
               onChange={onInputChange}
             />
-
             <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "0.5rem",
-              }}
+              style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
             >
-              <div
-                style={{
-                  padding: "1rem",
-                  background: "#eff6ff", // bg-blue-50
-                  borderRadius: "9999px",
-                  transition: "background 0.15s",
-                }}
-              >
-                <svg
-                  width={32}
-                  height={32}
-                  style={{ color: "#3b82f6" }} // text-blue-500
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <div
+                  style={{
+                    padding: "1rem",
+                    backgroundColor: "#eff6ff",
+                    borderRadius: "9999px",
+                    transition: "background-color 0.15s",
+                  }}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
+                  <svg
+                    style={{
+                      height: "2.5rem",
+                      width: "2.5rem",
+                      color: "#3b82f6",
+                    }}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                </div>
               </div>
-              <p
-                style={{
-                  color: "#4b5563", // text-gray-600
-                  fontWeight: 500,
-                  fontSize: "1rem",
-                }}
-              >
-                給与明細のExcelファイルをここにドロップ
-              </p>
-              <p
-                style={{
-                  fontSize: "0.75rem",
-                  color: "#9ca3af", // text-gray-400
-                }}
-              >
-                またはクリックしてファイルを選択
-              </p>
+              <div>
+                <p
+                  style={{
+                    color: "#334155",
+                    fontWeight: 700,
+                    fontSize: "1.125rem",
+                  }}
+                >
+                  弥生のCSVファイルをドロップ
+                </p>
+                <p
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#94a3b8",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  「資産一覧表_弥生.csv」を選択してください
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* ステータスメッセージ */}
           {status && (
-            <div
-              style={{
-                marginTop: "1rem",
-                textAlign: "center",
-              }}
-            >
-              <p
-                className={`text-base font-bold ${status.colorClass}`}
+            <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+              <div
                 style={{
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  ...(status.colorClass?.includes("text-green-600")
-                    ? { color: "#16a34a", margin: 0 }
-                    : status.colorClass?.includes("text-red-600")
-                    ? { color: "#dc2626", margin: 0 }
-                    : status.colorClass?.includes("text-blue-600")
-                    ? { color: "#2563eb", margin: 0 }
-                    : { margin: 0 }),
+                  display: "inline-block",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  fontSize: "0.875rem",
+                  fontWeight: 700,
+                  ...status.style,
                 }}
               >
                 {status.text}
-              </p>
+              </div>
             </div>
           )}
 
-          {/* 結果プレビュー */}
-          {hasResult && (
+          {showResult && (
             <div
               style={{
-                marginTop: "2.5rem", // mt-10
+                marginTop: "2.5rem",
                 display: "flex",
                 flexDirection: "column",
-                gap: "1.5rem", // space-y-6
+                gap: "1.5rem",
               }}
             >
               <div
                 style={{
                   display: "flex",
-                  flexDirection: "row",
-                  flexWrap: "wrap",
                   justifyContent: "space-between",
-                  alignItems: "flex-end",
-                  gap: "1rem",
+                  alignItems: "center",
                 }}
               >
-                <div>
-                  <h2
-                    style={{
-                      fontSize: "1.125rem", // text-lg
-                      fontWeight: "bold",
-                      color: "#1f2937", // text-gray-800
-                      margin: 0,
-                    }}
-                  >
-                    抽出結果プレビュー
-                  </h2>
-                  <p
-                    style={{
-                      fontSize: "0.875rem", // text-xs
-                      color: "#6b7280", // text-gray-500
-                      margin: 0,
-                    }}
-                  >
-                    ※「in.csv」の列構成に合わせています
-                  </p>
-                </div>
+                <h2
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 700,
+                    color: "#1e293b",
+                  }}
+                >
+                  変換完了
+                </h2>
                 <button
                   onClick={downloadCsv}
                   style={{
-                    background: "#2563eb", // bg-blue-600
+                    backgroundColor: "#2563eb",
                     color: "#fff",
-                    padding: "0.625rem 1.5rem",
-                    borderRadius: "0.375rem",
-                    fontWeight: "bold",
+                    padding: "0.75rem 2rem",
+                    borderRadius: "0.5rem",
+                    fontWeight: 700,
+                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                     border: "none",
-                    boxShadow:
-                      "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px 0 rgba(0,0,0,0.01)",
                     cursor: "pointer",
-                    transition:
-                      "background 0.15s, box-shadow 0.15s, color 0.15s",
+                    transition: "all 0.15s",
                   }}
-                  onMouseOver={
-                    (e) =>
-                      ((e.target as HTMLButtonElement).style.background =
-                        "#1d4ed8") // hover:bg-blue-700
-                  }
-                  onMouseOut={(e) =>
-                    ((e.target as HTMLButtonElement).style.background =
-                      "#2563eb")
-                  }
+                  onMouseOver={(e) => {
+                    (e.target as HTMLButtonElement).style.backgroundColor =
+                      "#1d4ed8";
+                    (e.target as HTMLButtonElement).style.transform =
+                      "translateY(-2px)";
+                  }}
+                  onMouseOut={(e) => {
+                    (e.target as HTMLButtonElement).style.backgroundColor =
+                      "#2563eb";
+                    (e.target as HTMLButtonElement).style.transform =
+                      "translateY(0)";
+                  }}
                 >
-                  集計用CSVをダウンロード
+                  指定形式CSVをダウンロード
                 </button>
               </div>
 
               <div
                 style={{
-                  background: "#fff",
-                  boxShadow:
-                    "0 1px 3px 0 rgba(0,0,0,0.04), 0 1px 2px 0 rgba(0,0,0,0.01)",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #e5e7eb",
-                  overflow: "auto",
-                  maxHeight: "60vh",
+                  backgroundColor: "#fff",
+                  boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1)",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "0.75rem",
+                  overflow: "hidden",
                 }}
               >
-                <table
+                <div
                   style={{
-                    minWidth: 650,
-                    width: "100%",
-                    fontSize: "0.9375rem",
-                    background: "#fff",
+                    backgroundColor: "#f8fafc",
+                    padding: "0.5rem 1rem",
+                    borderBottom: "1px solid #e2e8f0",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                   }}
                 >
-                  <thead>
-                    <tr
-                      style={{
-                        position: "sticky",
-                        top: 0,
-                        background: "#f9fafb", // bg-gray-50
-                        zIndex: 10,
-                      }}
-                    >
-                      {TARGET_HEADERS.map((h) => (
+                  <h3
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    変換済みデータ一覧
+                  </h3>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      color: "#3b82f6",
+                      backgroundColor: "#eff6ff",
+                      padding: "0.125rem 0.5rem",
+                      borderRadius: "0.25rem",
+                    }}
+                  >
+                    {convertedRows.length} items
+                  </span>
+                </div>
+                <div className="table-container">
+                  <table
+                    style={{
+                      minWidth: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: "10px",
+                    }}
+                  >
+                    <thead style={{ color: "#64748b" }}>
+                      <tr>
                         <th
-                          key={h}
                           style={{
-                            padding: "0.5rem 0.5rem",
+                            padding: "0.75rem 0.5rem",
                             textAlign: "left",
-                            fontWeight: "bold",
-                            color: "#4b5563", // text-gray-600
-                            textTransform: "uppercase",
-                            borderBottom: "1px solid #f9fafb",
-                            background: "#f9fafb", // bg-gray-50
-                            whiteSpace: "nowrap",
-                            fontSize: "0.75rem",
-                            letterSpacing: "0.04em",
+                            fontWeight: 700,
+                            boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
                           }}
                         >
-                          {h}
+                          コード
                         </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {convertedData.map((item, idx) => (
-                      <tr
-                        key={idx}
-                        style={{
-                          transition: "background 0.15s",
-                          cursor: "pointer",
-                        }}
-                        onMouseOver={(e) =>
-                          ((
-                            e.currentTarget as HTMLTableRowElement
-                          ).style.background = "#eff6ff")
-                        }
-                        onMouseOut={(e) =>
-                          ((
-                            e.currentTarget as HTMLTableRowElement
-                          ).style.background = "#fff")
-                        }
-                      >
-                        {TARGET_HEADERS.map((h) => (
+                        <th
+                          style={{
+                            padding: "0.75rem 0.5rem",
+                            textAlign: "left",
+                            fontWeight: 700,
+                            boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          資産種類名
+                        </th>
+                        <th
+                          style={{
+                            padding: "0.75rem 0.5rem",
+                            textAlign: "left",
+                            fontWeight: 700,
+                            boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          資産名称
+                        </th>
+                        <th
+                          style={{
+                            padding: "0.75rem 0.5rem",
+                            textAlign: "right",
+                            fontWeight: 700,
+                            boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+                          }}
+                        >
+                          取得価額
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody style={{ backgroundColor: "#fff" }}>
+                      {convertedRows.map((row, idx) => (
+                        <tr
+                          key={idx}
+                          style={{ transition: "background-color 0.15s" }}
+                          onMouseOver={(e) => {
+                            (
+                              e.currentTarget as HTMLTableRowElement
+                            ).style.backgroundColor = "#f8fafc";
+                          }}
+                          onMouseOut={(e) => {
+                            (
+                              e.currentTarget as HTMLTableRowElement
+                            ).style.backgroundColor = "#fff";
+                          }}
+                        >
                           <td
-                            key={h}
                             style={{
-                              padding: "0.5rem 0.5rem",
-                              borderBottom: "1px solid #f3f4f6",
-                              color: "#1f2937", // text-gray-800
-                              whiteSpace: "nowrap",
-                              fontSize: "0.85em",
-                              maxWidth: 120,
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
+                              padding: "0.75rem 0.5rem",
+                              borderBottom: "1px solid #f1f5f9",
+                              color: "#334155",
                             }}
                           >
-                            {item[h] || ""}
+                            {row[0] || ""}
                           </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <td
+                            style={{
+                              padding: "0.75rem 0.5rem",
+                              borderBottom: "1px solid #f1f5f9",
+                              color: "#334155",
+                            }}
+                          >
+                            {row[3] || ""}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem 0.5rem",
+                              borderBottom: "1px solid #f1f5f9",
+                              color: "#334155",
+                            }}
+                          >
+                            {row[10] || ""}
+                          </td>
+                          <td
+                            style={{
+                              padding: "0.75rem 0.5rem",
+                              borderBottom: "1px solid #f1f5f9",
+                              color: "#334155",
+                              textAlign: "right",
+                              fontFamily: "monospace",
+                            }}
+                          >
+                            {row[28] || ""}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
