@@ -1001,10 +1001,10 @@ export default function AssetConverterTool() {
     const bodyRows = convertedRows.map((row) =>
       row
         .map((v, index) => {
-          // C列（資産種類コード、インデックス2）は文字列として扱うため、先頭にシングルクォートを付ける
-          // Excelで開いたときに文字列として認識されるようにする
+          // C列（資産種類コード、インデックス2）は文字列として扱うため、先頭にタブ文字を付ける
+          // Excelで開いたときに文字列として認識され、表示形式は標準になる
           if (index === 2) {
-            return `"'${v}"`;
+            return `"\t${v}"`;
           }
           return `"${v}"`;
         })
