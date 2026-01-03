@@ -574,6 +574,49 @@ function classifyAssetTypeByRule(assetTypeName: string): string {
   return "";
 }
 
+// 資産種類コードから償却資産種類を決定
+function getDepreciationAssetType(assetTypeCode: string): string {
+  const code = assetTypeCode.toUpperCase();
+  switch (code) {
+    case "00":
+      return "申告なし";
+    case "10":
+      return "構築物";
+    case "20":
+      return "構築物";
+    case "30":
+      return "船舶";
+    case "40":
+      return "航空機";
+    case "50":
+      return "申告なし";
+    case "60":
+      return "工具、器具及び備品";
+    case "70":
+      return "工具、器具及び備品";
+    case "80":
+      return "機械及び装置";
+    case "90":
+      return "申告なし";
+    case "A0":
+      return "申告なし";
+    case "B0":
+      return "申告なし";
+    case "C0":
+      return "申告なし";
+    case "D0":
+      return "申告なし";
+    case "EO":
+    case "E0":
+      return "申告なし";
+    case "FO":
+    case "F0":
+      return "申告なし";
+    default:
+      return "";
+  }
+}
+
 // Gemini APIで資産種類コードを判定（条件分岐で判定できない場合のみ使用）
 async function classifyAssetTypeByGemini(
   assetTypeName: string,
@@ -874,6 +917,8 @@ export default function AssetConverterTool() {
           outRow[28] = 取得価額;
           outRow[30] = 圧縮記帳額;
           outRow[33] = 差引取得価額;
+          // 償却資産種類: 資産種類コードに応じて設定
+          outRow[98] = getDepreciationAssetType(assetTypeCode);
           // 償却期間の月数: 均等償却の場合は耐用年数の12倍
           if (depreciationMethod === "均等償却" && 耐用年数) {
             const 耐用年数数値 = parseFloat(耐用年数);
