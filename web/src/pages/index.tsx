@@ -371,6 +371,90 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
+async function classifyAssetType(assetTypeName: string): Promise<string> {
+  const apiKey = "AIzaSyDeMxQphuYyuz_rlKB4KhT-xTnCg4AZpYI";
+  if (!apiKey) {
+    console.warn(
+      "Gemini API Keyが設定されていません。資産種類コードは空のままです。"
+    );
+    return "";
+  }
+
+  const prompt = `
+あなたは資産管理の専門家です。与えられた資産種類名を分析し、以下のマッピングに基づいて適切な資産種類コードを返してください。
+
+マッピング:
+- 00：建物
+- 10：建物附属設備
+- 20：構築物
+- 30：船舶
+- 40：航空機
+- 50：車両運搬具
+- 60：工具
+- 70：器具備品
+- 80：機械装置
+- 90：生物
+- A0：無形固定資産
+- B0：フランチャイズ費
+- C0：土地
+- D0：非償却資産
+- E0：創立費
+- F0：一括償却資産
+- ##：一括償却
+
+資産種類名: "${assetTypeName}"
+
+上記の資産種類名に最も適切な資産種類コードを返してください。コードのみを返してください（例: "00"、"10"、"A0"など）。該当するコードがない場合は空文字列を返してください。
+`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  const payload = {
+    contents: [
+      {
+        parts: [{ text: prompt }],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.1,
+    },
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error(`Gemini API Error: ${response.status}`);
+      return "";
+    }
+
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text.trim();
+
+    // コードのみを抽出（マークダウンや余分なテキストを除去）
+    const codeMatch = text.match(/(?:^|\s)([0-9A-F]{2}|##)(?:\s|$)/);
+    if (codeMatch) {
+      return codeMatch[1];
+    }
+
+    // マッチしない場合は、テキストから直接抽出を試みる
+    const cleaned = text.replace(/```/g, "").replace(/json/g, "").trim();
+    if (cleaned.match(/^[0-9A-F]{2}$|^##$/)) {
+      return cleaned;
+    }
+
+    return "";
+  } catch (error) {
+    console.error("資産種類コードの分類中にエラーが発生しました:", error);
+    return "";
+  }
+}
+
 export default function AssetConverterTool() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -398,8 +482,13 @@ export default function AssetConverterTool() {
   );
 
   const processContent = useCallback(
-    (content: string) => {
+    async (content: string) => {
       try {
+        showMessage("ファイルを処理中...", {
+          backgroundColor: "#dbeafe",
+          color: "#1e40af",
+        });
+
         const lines = content.split(/\r?\n/);
         const outputData: ConvertedRow[] = [];
         let assetCounter = 1;
@@ -413,52 +502,77 @@ export default function AssetConverterTool() {
           }
         }
 
+        // まず全ての明細行を収集
+        const detailRows: { cols: string[]; kamoku: string }[] = [];
         lines.forEach((line) => {
           if (!line.trim()) return;
           const cols = parseCsvLine(line);
           if (cols[0] === "[明細行]") {
-            const outRow = new Array(TARGET_HEADER_LIST.length).fill(
-              ""
-            ) as string[];
-
             const kamoku = cols[3] || "";
-            const name = cols[9] || "";
-            const 取得日 = warekiToYYYYMMDD(cols[12]);
-            const 供用日 = warekiToYYYYMMDD(cols[13]);
-            const 取得価額 = cleanNumber(cols[23]);
-            const 圧縮記帳額 = cleanNumber(cols[24]);
-            const 差引取得価額 = cleanNumber(cols[25]);
-            const 耐用年数 = cleanNumber(cols[20]);
-            const 償却率 = cleanNumber(cols[21]);
-            const 償却実施率 = cleanNumber(cols[22]);
-            const 数量 = cleanNumber(cols[10]);
-            const 単位 = cols[11] || "";
-
-            outRow[0] = String(assetCounter++); // 資産コード: 0埋めしない
-            outRow[1] = "1"; // 分割コード: 2桁"01"でなく"1"に
-            outRow[2] = "";
-            outRow[3] = kamoku;
-            outRow[4] = cols[19] === "即時償却" ? "少額資産" : "定額法";
-            outRow[10] = name;
-            outRow[13] = 取得日;
-            outRow[14] = 供用日;
-            outRow[15] = 数量;
-            outRow[16] = 単位;
-            outRow[17] = 耐用年数;
-            outRow[21] = 償却率;
-            outRow[74] = 償却実施率;
-            outRow[27] = 取得価額;
-            outRow[28] = 取得価額;
-            outRow[30] = 圧縮記帳額;
-            outRow[33] = 差引取得価額;
-
-            outputData.push(outRow);
+            detailRows.push({ cols, kamoku });
           }
         });
 
-        if (outputData.length === 0) {
+        if (detailRows.length === 0) {
           showError("有効なデータが見つかりませんでした。");
           return;
+        }
+
+        // 資産種類コードを分類（8行目以下、つまりインデックス7以降のD列）
+        showMessage(
+          `${detailRows.length}件のデータを処理中... 資産種類コードを分類しています...`,
+          {
+            backgroundColor: "#dbeafe",
+            color: "#1e40af",
+          }
+        );
+
+        // 各資産種類名を分類
+        for (let i = 0; i < detailRows.length; i++) {
+          const { cols, kamoku } = detailRows[i];
+          const outRow = new Array(TARGET_HEADER_LIST.length).fill(
+            ""
+          ) as string[];
+
+          const name = cols[9] || "";
+          const 取得日 = warekiToYYYYMMDD(cols[12]);
+          const 供用日 = warekiToYYYYMMDD(cols[13]);
+          const 取得価額 = cleanNumber(cols[23]);
+          const 圧縮記帳額 = cleanNumber(cols[24]);
+          const 差引取得価額 = cleanNumber(cols[25]);
+          const 耐用年数 = cleanNumber(cols[20]);
+          const 償却率 = cleanNumber(cols[21]);
+          const 償却実施率 = cleanNumber(cols[22]);
+          const 数量 = cleanNumber(cols[10]);
+          const 単位 = cols[11] || "";
+
+          // 生成されるファイルの8行目以下（データ行）のD列（資産種類名）をGeminiで分類
+          // メタヘッダー6行 + ヘッダー行1行 = 7行目まで、8行目以降がデータ行
+          // すべてのデータ行に対して資産種類コードを分類
+          let assetTypeCode = "";
+          if (kamoku) {
+            assetTypeCode = await classifyAssetType(kamoku);
+          }
+
+          outRow[0] = String(assetCounter++); // 資産コード: 0埋めしない
+          outRow[1] = "1"; // 分割コード: 2桁"01"でなく"1"に
+          outRow[2] = assetTypeCode; // 資産種類コード: Geminiで分類
+          outRow[3] = kamoku;
+          outRow[4] = cols[19] === "即時償却" ? "少額資産" : "定額法";
+          outRow[10] = name;
+          outRow[13] = 取得日;
+          outRow[14] = 供用日;
+          outRow[15] = 数量;
+          outRow[16] = 単位;
+          outRow[17] = 耐用年数;
+          outRow[21] = 償却率;
+          outRow[74] = 償却実施率;
+          outRow[27] = 取得価額;
+          outRow[28] = 取得価額;
+          outRow[30] = 圧縮記帳額;
+          outRow[33] = 差引取得価額;
+
+          outputData.push(outRow);
         }
 
         setConvertedRows(outputData);
@@ -485,18 +599,18 @@ export default function AssetConverterTool() {
       });
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         if (!e.target) return;
         const content = e.target.result as string;
         if (!content.includes("[明細行]")) {
           const utf8Reader = new FileReader();
-          utf8Reader.onload = (ev) => {
+          utf8Reader.onload = async (ev) => {
             if (!ev.target) return;
-            processContent(ev.target.result as string);
+            await processContent(ev.target.result as string);
           };
           utf8Reader.readAsText(file, "UTF-8");
         } else {
-          processContent(content);
+          await processContent(content);
         }
       };
       reader.readAsText(file, "Shift-JIS");
