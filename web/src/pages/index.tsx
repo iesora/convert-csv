@@ -423,8 +423,8 @@ export default function AssetConverterTool() {
             const 数量 = cleanNumber(cols[10]);
             const 単位 = cols[11] || "";
 
-            outRow[0] = String(assetCounter++).padStart(4, "0");
-            outRow[1] = "01";
+            outRow[0] = String(assetCounter++); // 資産コード: 0埋めしない
+            outRow[1] = "1"; // 分割コード: 2桁"01"でなく"1"に
             outRow[2] = "";
             outRow[3] = kamoku;
             outRow[4] = cols[19] === "即時償却" ? "少額資産" : "定額法";
