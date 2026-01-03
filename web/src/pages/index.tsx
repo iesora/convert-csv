@@ -1046,10 +1046,14 @@ export default function AssetConverterTool() {
     const bodyRows = convertedRows.map((row) =>
       row
         .map((v, index) => {
-          // C列（資産種類コード、インデックス2）は文字列として扱うため、先頭にタブ文字を付ける
-          // Excelで開いたときに文字列として認識され、表示形式は標準になる
+          // C列（資産種類コード、インデックス2）は数値として扱う
           if (index === 2) {
-            return `"\t${v}"`;
+            // 空の場合は空文字列を返す
+            if (!v || v.trim() === "") {
+              return `""`;
+            }
+            // 数値として出力（クォートなし）することでExcelで数値として認識され、右揃えになる
+            return v;
           }
           return `"${v}"`;
         })
