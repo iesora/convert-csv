@@ -17,6 +17,7 @@
     "antd": "^5.21.3",
     "axios": "^1.6.8",
     "dayjs": "^1.11.13",
+    "encoding-japanese": "^2.2.0",
     "formik": "^2.4.6",
     "luxon": "^3.5.0",
     "moment": "^2.30.1",

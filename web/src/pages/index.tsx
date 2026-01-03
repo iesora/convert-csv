@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from "react";
 import PageLayout from "@/components/common/PageLayout";
+import Encoding from "encoding-japanese";
 
 type ConvertedRow = string[];
 
@@ -547,9 +548,25 @@ export default function AssetConverterTool() {
       "\r\n" +
       bodyRows.join("\r\n");
 
-    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    const blob = new Blob([bom, fullContent], {
-      type: "text/csv;charset=utf-8;",
+    // UTF-8文字列をShift_JIS（CP932）に変換
+    const sjisResult = Encoding.convert(fullContent, {
+      to: "SJIS",
+      from: "UNICODE",
+      type: "arraybuffer",
+    });
+    const sjisArray =
+      sjisResult instanceof Uint8Array
+        ? sjisResult
+        : new Uint8Array(sjisResult);
+
+    // ArrayBufferに変換してBlobPartとして使用
+    const arrayBuffer = sjisArray.buffer.slice(
+      sjisArray.byteOffset,
+      sjisArray.byteOffset + sjisArray.byteLength
+    ) as ArrayBuffer;
+
+    const blob = new Blob([arrayBuffer], {
+      type: "text/csv;charset=shift_jis;",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
