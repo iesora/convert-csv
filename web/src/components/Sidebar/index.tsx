@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
-import { Layout, Menu, MenuProps, Image } from "antd";
-import { HomeOutlined } from "@ant-design/icons";
+import { Layout, Menu, MenuProps } from "antd";
+import { HomeOutlined, CameraOutlined } from "@ant-design/icons";
 import { accentTextColor, themeColor } from "@/utils/colors";
 import { useAPIAuthenticate } from "@/hook/api/auth/useAPIAuthenticate";
 import { notification } from "antd";
@@ -36,6 +36,7 @@ const Sidebar: React.FC = () => {
 
   const menuItems: MenuProps["items"] = [
     { key: "/", icon: <HomeOutlined />, label: "ホーム" },
+    { key: "/receipt", icon: <CameraOutlined />, label: "AI経理読み取り" },
   ];
 
   return (

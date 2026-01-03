@@ -25,6 +25,7 @@ import {
   Col,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
+import PageLayout from "@/components/common/PageLayout";
 
 const { Title, Text } = Typography;
 
@@ -55,7 +56,7 @@ interface GenerativePart {
   };
 }
 
-const ReceiptPage: React.FC = () => {
+function ReceiptPage() {
   const [files, setFiles] = useState<FilePreview[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,7 +64,7 @@ const ReceiptPage: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState("");
 
   // Gemini API Key (環境変数から取得)
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+  const apiKey = "AIzaSyDeMxQphuYyuz_rlKB4KhT-xTnCg4AZpYI";
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -489,313 +490,315 @@ const ReceiptPage: React.FC = () => {
   ];
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#f5f5f5",
-        padding: "16px",
-        fontFamily:
-          "'游ゴシック体', YuGothic, '游ゴシック', 'Yu Gothic', sans-serif",
-      }}
-    >
-      <div style={{ maxWidth: "95%", margin: "0 auto" }}>
-        {/* Header */}
-        <Card
-          style={{
-            marginBottom: "24px",
-            borderRadius: "12px",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-          }}
-        >
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Space size="middle">
+    <PageLayout>
+      <div
+        style={{
+          minHeight: "100vh",
+          backgroundColor: "#f5f5f5",
+          padding: "16px",
+          fontFamily:
+            "'游ゴシック体', YuGothic, '游ゴシック', 'Yu Gothic', sans-serif",
+        }}
+      >
+        <div style={{ maxWidth: "95%", margin: "0 auto" }}>
+          {/* Header */}
+          <Card
+            style={{
+              marginBottom: "24px",
+              borderRadius: "12px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+            }}
+          >
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Space size="middle">
+                  <div
+                    style={{
+                      backgroundColor: "#1890ff",
+                      padding: "8px",
+                      borderRadius: "8px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CameraOutlined
+                      style={{ fontSize: "24px", color: "white" }}
+                    />
+                  </div>
+                  <div>
+                    <Title level={4} style={{ margin: 0 }}>
+                      AI経理読み取り
+                    </Title>
+                    <Text type="secondary">
+                      レシートから勘定科目・税率も自動推測
+                    </Text>
+                  </div>
+                </Space>
+              </Col>
+              <Col>
+                <div style={{ textAlign: "right" }}>
+                  <Text type="secondary" style={{ fontSize: "12px" }}>
+                    合計金額
+                  </Text>
+                  <div
+                    style={{
+                      fontSize: "24px",
+                      fontWeight: "bold",
+                      color: "#1890ff",
+                    }}
+                  >
+                    ¥{getTotalAmount().toLocaleString()}
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* Upload Area */}
+          <Card
+            style={{
+              marginBottom: "24px",
+              borderRadius: "12px",
+              cursor: loading ? "not-allowed" : "pointer",
+              border: "2px dashed",
+              borderColor: loading ? "#d9d9d9" : "#1890ff",
+              backgroundColor: loading ? "#fafafa" : "white",
+              transition: "all 0.3s",
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+            onClick={() => !loading && fileInputRef.current?.click()}
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              accept="image/*,application/pdf"
+              multiple
+              onChange={handleFileSelect}
+            />
+
+            {loading ? (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <Spin size="large" />
+                <div style={{ marginTop: "16px" }}>
+                  <Text strong>AIがレシートを解析中...</Text>
+                  <div style={{ marginTop: "8px" }}>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      日付・金額・勘定科目・税区分を推測しています
+                    </Text>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "40px" }}>
                 <div
                   style={{
-                    backgroundColor: "#1890ff",
-                    padding: "8px",
-                    borderRadius: "8px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    backgroundColor: "#e6f7ff",
+                    padding: "16px",
+                    borderRadius: "50%",
+                    display: "inline-flex",
+                    marginBottom: "16px",
                   }}
                 >
-                  <CameraOutlined
-                    style={{ fontSize: "24px", color: "white" }}
+                  <UploadOutlined
+                    style={{ fontSize: "32px", color: "#1890ff" }}
                   />
                 </div>
                 <div>
-                  <Title level={4} style={{ margin: 0 }}>
-                    AI経理読み取り
-                  </Title>
-                  <Text type="secondary">
-                    レシートから勘定科目・税率も自動推測
+                  <Text strong style={{ fontSize: "16px" }}>
+                    レシート画像・PDFをここにドロップ
                   </Text>
+                  <div style={{ marginTop: "8px" }}>
+                    <Text type="secondary">
+                      またはクリックしてファイルを選択（複数可）
+                    </Text>
+                  </div>
                 </div>
-              </Space>
-            </Col>
-            <Col>
-              <div style={{ textAlign: "right" }}>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  合計金額
-                </Text>
-                <div
+              </div>
+            )}
+          </Card>
+
+          {/* Status Messages */}
+          {error && (
+            <Alert
+              message={error}
+              type="error"
+              icon={<ExclamationCircleOutlined />}
+              closable
+              onClose={() => setError("")}
+              style={{ marginBottom: "16px" }}
+            />
+          )}
+
+          {statusMessage && !error && (
+            <Alert
+              message={statusMessage}
+              type="success"
+              icon={<CheckOutlined />}
+              closable
+              onClose={() => setStatusMessage("")}
+              style={{ marginBottom: "16px" }}
+            />
+          )}
+
+          {/* Main Content: Table & Preview */}
+          {expenses.length > 0 && (
+            <Row gutter={24}>
+              {/* Left: Data Table */}
+              <Col xs={24} lg={18}>
+                <Card
                   style={{
-                    fontSize: "24px",
-                    fontWeight: "bold",
-                    color: "#1890ff",
+                    borderRadius: "12px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                  }}
+                  title={
+                    <Space>
+                      <FileTextOutlined />
+                      <Text strong>読み取り結果 (編集可能)</Text>
+                    </Space>
+                  }
+                  extra={
+                    <Space>
+                      <Button icon={<PlusOutlined />} onClick={handleAddRow}>
+                        行追加
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<TableOutlined />}
+                        onClick={handleOpenSpreadsheet}
+                        style={{
+                          backgroundColor: "#52c41a",
+                          borderColor: "#52c41a",
+                        }}
+                      >
+                        スプシに転記
+                      </Button>
+                      <Button
+                        type="primary"
+                        icon={<DownloadOutlined />}
+                        onClick={exportToCSV}
+                      >
+                        CSV保存
+                      </Button>
+                    </Space>
+                  }
+                >
+                  <AntTable
+                    columns={columns}
+                    dataSource={expenses}
+                    rowKey="id"
+                    pagination={false}
+                    scroll={{ x: "max-content" }}
+                    size="small"
+                  />
+                  <datalist id="accountTitles">
+                    <option value="旅費交通費" />
+                    <option value="消耗品費" />
+                    <option value="会議費" />
+                    <option value="交際費" />
+                    <option value="通信費" />
+                    <option value="新聞図書費" />
+                    <option value="雑費" />
+                  </datalist>
+                </Card>
+              </Col>
+
+              {/* Right: Image Preview */}
+              <Col xs={24} lg={6}>
+                <Card
+                  title={
+                    <Text
+                      strong
+                      style={{ fontSize: "12px", textTransform: "uppercase" }}
+                    >
+                      ファイル一覧
+                    </Text>
+                  }
+                  style={{
+                    borderRadius: "12px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                    position: "sticky",
+                    top: "24px",
                   }}
                 >
-                  ¥{getTotalAmount().toLocaleString()}
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </Card>
-
-        {/* Upload Area */}
-        <Card
-          style={{
-            marginBottom: "24px",
-            borderRadius: "12px",
-            cursor: loading ? "not-allowed" : "pointer",
-            border: "2px dashed",
-            borderColor: loading ? "#d9d9d9" : "#1890ff",
-            backgroundColor: loading ? "#fafafa" : "white",
-            transition: "all 0.3s",
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={handleDrop}
-          onClick={() => !loading && fileInputRef.current?.click()}
-        >
-          <input
-            type="file"
-            ref={fileInputRef}
-            style={{ display: "none" }}
-            accept="image/*,application/pdf"
-            multiple
-            onChange={handleFileSelect}
-          />
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              <Spin size="large" />
-              <div style={{ marginTop: "16px" }}>
-                <Text strong>AIがレシートを解析中...</Text>
-                <div style={{ marginTop: "8px" }}>
-                  <Text type="secondary" style={{ fontSize: "12px" }}>
-                    日付・金額・勘定科目・税区分を推測しています
-                  </Text>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div style={{ textAlign: "center", padding: "40px" }}>
-              <div
-                style={{
-                  backgroundColor: "#e6f7ff",
-                  padding: "16px",
-                  borderRadius: "50%",
-                  display: "inline-flex",
-                  marginBottom: "16px",
-                }}
-              >
-                <UploadOutlined
-                  style={{ fontSize: "32px", color: "#1890ff" }}
-                />
-              </div>
-              <div>
-                <Text strong style={{ fontSize: "16px" }}>
-                  レシート画像・PDFをここにドロップ
-                </Text>
-                <div style={{ marginTop: "8px" }}>
-                  <Text type="secondary">
-                    またはクリックしてファイルを選択（複数可）
-                  </Text>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Status Messages */}
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            icon={<ExclamationCircleOutlined />}
-            closable
-            onClose={() => setError("")}
-            style={{ marginBottom: "16px" }}
-          />
-        )}
-
-        {statusMessage && !error && (
-          <Alert
-            message={statusMessage}
-            type="success"
-            icon={<CheckOutlined />}
-            closable
-            onClose={() => setStatusMessage("")}
-            style={{ marginBottom: "16px" }}
-          />
-        )}
-
-        {/* Main Content: Table & Preview */}
-        {expenses.length > 0 && (
-          <Row gutter={24}>
-            {/* Left: Data Table */}
-            <Col xs={24} lg={18}>
-              <Card
-                style={{
-                  borderRadius: "12px",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                }}
-                title={
-                  <Space>
-                    <FileTextOutlined />
-                    <Text strong>読み取り結果 (編集可能)</Text>
-                  </Space>
-                }
-                extra={
-                  <Space>
-                    <Button icon={<PlusOutlined />} onClick={handleAddRow}>
-                      行追加
-                    </Button>
-                    <Button
-                      type="primary"
-                      icon={<TableOutlined />}
-                      onClick={handleOpenSpreadsheet}
-                      style={{
-                        backgroundColor: "#52c41a",
-                        borderColor: "#52c41a",
-                      }}
-                    >
-                      スプシに転記
-                    </Button>
-                    <Button
-                      type="primary"
-                      icon={<DownloadOutlined />}
-                      onClick={exportToCSV}
-                    >
-                      CSV保存
-                    </Button>
-                  </Space>
-                }
-              >
-                <AntTable
-                  columns={columns}
-                  dataSource={expenses}
-                  rowKey="id"
-                  pagination={false}
-                  scroll={{ x: "max-content" }}
-                  size="small"
-                />
-                <datalist id="accountTitles">
-                  <option value="旅費交通費" />
-                  <option value="消耗品費" />
-                  <option value="会議費" />
-                  <option value="交際費" />
-                  <option value="通信費" />
-                  <option value="新聞図書費" />
-                  <option value="雑費" />
-                </datalist>
-              </Card>
-            </Col>
-
-            {/* Right: Image Preview */}
-            <Col xs={24} lg={6}>
-              <Card
-                title={
-                  <Text
-                    strong
-                    style={{ fontSize: "12px", textTransform: "uppercase" }}
+                  <Space
+                    direction="vertical"
+                    style={{ width: "100%" }}
+                    size="small"
                   >
-                    ファイル一覧
-                  </Text>
-                }
-                style={{
-                  borderRadius: "12px",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                  position: "sticky",
-                  top: "24px",
-                }}
-              >
-                <Space
-                  direction="vertical"
-                  style={{ width: "100%" }}
-                  size="small"
-                >
-                  {files.map((file) => (
-                    <div
-                      key={file.id}
-                      style={{
-                        position: "relative",
-                        aspectRatio: "3/4",
-                        borderRadius: "8px",
-                        overflow: "hidden",
-                        border: "1px solid #d9d9d9",
-                        backgroundColor: "#fafafa",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      {file.isPdf ? (
-                        <div style={{ textAlign: "center", padding: "16px" }}>
-                          <FileTextOutlined
-                            style={{ fontSize: "48px", color: "#ff4d4f" }}
-                          />
-                          <div
-                            style={{
-                              marginTop: "8px",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              color: "#666",
-                              backgroundColor: "white",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              display: "inline-block",
-                            }}
-                          >
-                            PDF
+                    {files.map((file) => (
+                      <div
+                        key={file.id}
+                        style={{
+                          position: "relative",
+                          aspectRatio: "3/4",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          border: "1px solid #d9d9d9",
+                          backgroundColor: "#fafafa",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {file.isPdf ? (
+                          <div style={{ textAlign: "center", padding: "16px" }}>
+                            <FileTextOutlined
+                              style={{ fontSize: "48px", color: "#ff4d4f" }}
+                            />
+                            <div
+                              style={{
+                                marginTop: "8px",
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                color: "#666",
+                                backgroundColor: "white",
+                                padding: "4px 8px",
+                                borderRadius: "4px",
+                                display: "inline-block",
+                              }}
+                            >
+                              PDF
+                            </div>
+                            <div
+                              style={{
+                                fontSize: "10px",
+                                color: "#999",
+                                marginTop: "4px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                width: "100%",
+                              }}
+                            >
+                              {file.file.name}
+                            </div>
                           </div>
-                          <div
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={file.url}
+                            alt="Receipt"
                             style={{
-                              fontSize: "10px",
-                              color: "#999",
-                              marginTop: "4px",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
                               width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
                             }}
-                          >
-                            {file.file.name}
-                          </div>
-                        </div>
-                      ) : (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={file.url}
-                          alt="Receipt"
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-        )}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </Space>
+                </Card>
+              </Col>
+            </Row>
+          )}
+        </div>
       </div>
-    </div>
+    </PageLayout>
   );
-};
+}
 
 export default ReceiptPage;
