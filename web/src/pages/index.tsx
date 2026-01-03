@@ -530,11 +530,11 @@ export default function AssetConverterTool() {
 
     const metaHeader = [
       "バージョン=1.9.0.10(FILEVERSION=1.13)",
-      "顧問先コード=002",
+      "顧問先コード=",
       "顧問先名称=株式会社二垣経営研究所",
       "法人個人区分=法人",
-      "事業年度開始日=20250101",
-      "事業年度終了日=20251231",
+      "事業年度開始日=",
+      "事業年度終了日=",
     ];
 
     const headerRow = ";" + TARGET_HEADER_LIST.join(",");
