@@ -49,6 +49,8 @@ const Sidebar: React.FC = () => {
         backgroundColor: themeColor,
       }}
       className="sidebar"
+      breakpoint="lg"
+      collapsedWidth={0}
     >
       <div
         style={{
@@ -93,6 +95,13 @@ const Sidebar: React.FC = () => {
           style={{ backgroundColor: themeColor, borderRight: 0 }}
         />
       </div>
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .sidebar {
+            display: none !important;
+          }
+        }
+      `}</style>
     </Sider>
   );
 };

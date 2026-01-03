@@ -589,6 +589,39 @@ export default function AssetConverterTool() {
             z-index: 10;
             background-color: #f8fafc;
           }
+          @media (max-width: 768px) {
+            .main-container {
+              padding-top: 1.5rem !important;
+              padding-bottom: 1.5rem !important;
+              padding-left: 0.5rem !important;
+              padding-right: 0.5rem !important;
+            }
+            .page-header {
+              margin-bottom: 1.5rem !important;
+            }
+            .page-title {
+              font-size: 1.5rem !important;
+            }
+            .page-description {
+              font-size: 0.875rem !important;
+            }
+            .drop-zone-container {
+              padding: 2rem 1rem !important;
+            }
+            .table-container {
+              max-height: 400px;
+              overflow-x: auto;
+              -webkit-overflow-scrolling: touch;
+            }
+            .data-table {
+              font-size: 9px !important;
+            }
+            .data-table th,
+            .data-table td {
+              padding: 0.5rem 0.25rem !important;
+              white-space: nowrap;
+            }
+          }
         `}</style>
         <div
           style={{
@@ -599,8 +632,12 @@ export default function AssetConverterTool() {
             paddingLeft: "1rem",
             paddingRight: "1rem",
           }}
+          className="main-container"
         >
-          <header style={{ textAlign: "center", marginBottom: "2.5rem" }}>
+          <header
+            style={{ textAlign: "center", marginBottom: "2.5rem" }}
+            className="page-header"
+          >
             <h1
               style={{
                 fontSize: "1.875rem",
@@ -608,17 +645,20 @@ export default function AssetConverterTool() {
                 color: "#1e293b",
                 marginBottom: "0.5rem",
               }}
+              className="page-title"
             >
               資産データ変換ツール
             </h1>
-            <p style={{ color: "#475569" }}>
+            <p style={{ color: "#475569" }} className="page-description">
               弥生形式の資産一覧表を、指定のフルフォーマットCSVに変換します
             </p>
           </header>
 
           <div
             id="dropZone"
-            className={`drop-zone ${isDragOver ? "dragover" : ""}`}
+            className={`drop-zone drop-zone-container ${
+              isDragOver ? "dragover" : ""
+            }`}
             style={{
               border: "2px dashed",
               borderColor: isDragOver ? "#3b82f6" : "#cbd5e1",
@@ -818,6 +858,7 @@ export default function AssetConverterTool() {
                       borderCollapse: "collapse",
                       fontSize: "10px",
                     }}
+                    className="data-table"
                   >
                     <thead style={{ color: "#64748b" }}>
                       <tr>

@@ -15,8 +15,19 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
   return (
     <Layout style={{ minHeight: "100vh" }} hasSider>
       <Sidebar />
-      <Layout style={{ marginInlineStart: 220, backgroundColor: "#FFFFFF" }}>
-        <Content style={{ margin: "16px 16px" }}>
+      <Layout
+        style={{
+          marginInlineStart: 220,
+          backgroundColor: "#FFFFFF",
+        }}
+        className="main-layout"
+      >
+        <Content
+          style={{
+            margin: "16px 16px",
+          }}
+          className="main-content"
+        >
           <div
             style={{
               background: colorBgContainer,
@@ -24,11 +35,25 @@ const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
               padding: 24,
               borderRadius: borderRadiusLG,
             }}
+            className="content-wrapper"
           >
             {children}
           </div>
         </Content>
       </Layout>
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .main-layout {
+            margin-inline-start: 0 !important;
+          }
+          .main-content {
+            margin: 8px 8px !important;
+          }
+          .content-wrapper {
+            padding: 16px !important;
+          }
+        }
+      `}</style>
     </Layout>
   );
 };

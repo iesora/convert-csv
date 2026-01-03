@@ -105,3 +105,34 @@ a {
     color-scheme: dark;
   }
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  :root {
+    --max-width: 100%;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  /* Ensure touch-friendly tap targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent horizontal scroll */
+  * {
+    max-width: 100%;
+  }
+
+  /* Improve table responsiveness */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

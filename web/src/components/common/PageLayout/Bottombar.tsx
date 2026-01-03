@@ -54,16 +54,18 @@ const Bottombar: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        marginBottom: "16px",
-        backgroundColor: themeColorSuperLight,
-        height: "60px",
-        boxShadow: "0px -2px 8px rgba(30, 28, 28, 0.05)",
-      }}
-    >
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          marginBottom: "16px",
+          backgroundColor: themeColorSuperLight,
+          height: "60px",
+          boxShadow: "0px -2px 8px rgba(30, 28, 28, 0.05)",
+        }}
+        className="bottombar"
+      >
       <div
         key="/"
         onClick={() => handleMenuClick({ key: "/" } as any)}
@@ -198,7 +200,23 @@ const Bottombar: React.FC = () => {
           ログアウト
         </div>
       </div>
-    </div>
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .bottombar {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin-bottom: 0 !important;
+            z-index: 1000 !important;
+            width: 100% !important;
+          }
+          body {
+            padding-bottom: 60px !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 

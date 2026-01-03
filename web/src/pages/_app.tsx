@@ -15,7 +15,7 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
     styles: {
       global: {
         "html, body": {
-          overflow: "hidden",
+          overflow: "auto",
           width: "100%",
           position: "relative",
           padding: 0,

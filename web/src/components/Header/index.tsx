@@ -62,54 +62,75 @@ const Header = ({ withBottombar }: HeaderProps) => {
     },
   ];
   return (
-    <AntdHeader
-      style={{
-        backgroundColor: themeColorSuperLight,
-        height: withBottombar ? 60 : 80,
-        lineHeight: withBottombar ? "60px" : "80px",
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: withBottombar ? "flex-start" : "space-between",
-        paddingLeft: "5%",
-        paddingRight: "5%",
-        width: "100%",
-        borderBottom: "1px solid #e0e0e0",
-        boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 1000,
-      }}
-      className="header"
-    >
-      <img
-        src={"/vmLogo_removedBg.png"}
-        alt="logo"
+    <>
+      <AntdHeader
         style={{
-          marginRight: "10%",
-          width: withBottombar ? 71 : 95,
+          backgroundColor: themeColorSuperLight,
           height: withBottombar ? 60 : 80,
+          lineHeight: withBottombar ? "60px" : "80px",
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: withBottombar ? "flex-start" : "space-between",
+          paddingLeft: "5%",
+          paddingRight: "5%",
+          width: "100%",
+          borderBottom: "1px solid #e0e0e0",
+          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
         }}
-      />
+        className="header"
+      >
+        <img
+          src={"/vmLogo_removedBg.png"}
+          alt="logo"
+          style={{
+            marginRight: "10%",
+            width: withBottombar ? 71 : 95,
+            height: withBottombar ? 60 : 80,
+          }}
+          className="header-logo"
+        />
 
-      {!withBottombar && (
-        <div style={{ width: "90%" }}>
-          <Menu
-            mode="horizontal"
-            selectedKeys={[currentPath]}
-            onClick={handleMenuClick}
-            items={menuItems}
-            style={{
-              flex: 1,
-              justifyContent: "right",
-              backgroundColor: themeColorSuperLight,
-            }}
-          />
-        </div>
-      )}
-    </AntdHeader>
+        {!withBottombar && (
+          <div style={{ width: "90%" }} className="header-menu">
+            <Menu
+              mode="horizontal"
+              selectedKeys={[currentPath]}
+              onClick={handleMenuClick}
+              items={menuItems}
+              style={{
+                flex: 1,
+                justifyContent: "right",
+                backgroundColor: themeColorSuperLight,
+              }}
+            />
+          </div>
+        )}
+      </AntdHeader>
+      <style jsx global>{`
+        @media (max-width: 768px) {
+          .header {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            height: 60px !important;
+            line-height: 60px !important;
+          }
+          .header-logo {
+            width: 50px !important;
+            height: 50px !important;
+            margin-right: 8px !important;
+          }
+          .header-menu {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </>
   );
 };
 
