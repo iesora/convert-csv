@@ -528,7 +528,7 @@ function ReceiptPage() {
                   </div>
                   <div>
                     <Title level={4} style={{ margin: 0 }}>
-                      AI経理読み取り
+                      レシート読み取り
                     </Title>
                     <Text type="secondary">
                       レシートから勘定科目・税率も自動推測
