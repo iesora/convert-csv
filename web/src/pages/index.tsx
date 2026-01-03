@@ -380,6 +380,7 @@ export default function AssetConverterTool() {
   } | null>(null);
   const [convertedRows, setConvertedRows] = useState<ConvertedRow[]>([]);
   const [showResult, setShowResult] = useState(false);
+  const [clientName, setClientName] = useState<string>("");
 
   const showMessage = useCallback((msg: string, style: React.CSSProperties) => {
     setStatus({ text: msg, style });
@@ -402,6 +403,15 @@ export default function AssetConverterTool() {
         const lines = content.split(/\r?\n/);
         const outputData: ConvertedRow[] = [];
         let assetCounter = 1;
+
+        // B3セル（行2、列1）から顧問先名称を取得
+        if (lines.length > 2) {
+          const row3 = parseCsvLine(lines[2]);
+          if (row3.length > 1) {
+            const nameFromB3 = row3[1]?.trim() || "";
+            setClientName(nameFromB3);
+          }
+        }
 
         lines.forEach((line) => {
           if (!line.trim()) return;
@@ -528,11 +538,22 @@ export default function AssetConverterTool() {
   const downloadCsv = useCallback(() => {
     if (convertedRows.length === 0) return;
 
+    // 顧問先名称が取得されている場合はそれを使用、なければデフォルト値
+    const clientNameValue = clientName || "株式会社二垣経営研究所";
+    const clientNameLine = `顧問先名称=${clientNameValue}`;
+
+    // 顧問先名称に「株式会社」「有限会社」「合同会社」が含まれている場合は法人、それ以外は個人
+    const isCorporation =
+      clientNameValue.includes("株式会社") ||
+      clientNameValue.includes("有限会社") ||
+      clientNameValue.includes("合同会社");
+    const corporateTypeLine = `法人個人区分=${isCorporation ? "法人" : "個人"}`;
+
     const metaHeader = [
       "バージョン=1.9.0.10(FILEVERSION=1.13)",
       "顧問先コード=",
-      "顧問先名称=株式会社二垣経営研究所",
-      "法人個人区分=法人",
+      clientNameLine,
+      corporateTypeLine,
       "事業年度開始日=",
       "事業年度終了日=",
     ];
@@ -577,7 +598,7 @@ export default function AssetConverterTool() {
       .replace(/-/g, "")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  }, [convertedRows]);
+  }, [convertedRows, clientName]);
 
   return (
     <PageLayout>
