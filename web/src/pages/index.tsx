@@ -1051,14 +1051,14 @@ export default function AssetConverterTool() {
           // インデックス17: 耐用年数
           // インデックス26: 償却期間の月数
           // インデックス28: 取得価額
-          if (index === 2 || index === 17 || index === 26 || index === 28) {
-            // 空の場合は空文字列を返す
-            if (!v || v.trim() === "") {
-              return `""`;
-            }
-            // 数値として出力（クォートなし）することでExcelで数値として認識され、右揃えになる
-            return v;
+
+          // 空の場合は空文字列を返す
+          if (!v || v.trim() === "") {
+            return `""`;
           }
+          // 数値として出力（クォートなし）することでExcelで数値として認識され、右揃えになる
+          return v;
+
           return `"${v}"`;
         })
         .join(",")
