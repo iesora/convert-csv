@@ -556,14 +556,14 @@ function classifyAssetTypeByRule(assetTypeName: string): string {
     return "D0";
   }
 
-  // E0：創立費
+  // EO：創立費
   if (normalized.includes("創立") || normalized.includes("設立")) {
-    return "E0";
+    return "EO";
   }
 
-  // F0：一括償却資産
+  // FO：一括償却資産
   if (normalized.includes("一括償却") || normalized.includes("少額")) {
-    return "F0";
+    return "FO";
   }
 
   // ##：一括償却
@@ -605,8 +605,8 @@ async function classifyAssetTypeByGemini(
 - B0：フランチャイズ費
 - C0：土地
 - D0：非償却資産
-- E0：創立費
-- F0：一括償却資産
+- EO：創立費
+- FO：一括償却資産
 - ##：一括償却
 
 資産種類名: "${assetTypeName}"
@@ -852,9 +852,9 @@ export default function AssetConverterTool() {
           outRow[3] = kamoku;
           // 償却方法: 資産種類コードに応じて設定
           let depreciationMethod: string;
-          if (assetTypeCode === "F0") {
+          if (assetTypeCode === "FO") {
             depreciationMethod = "任意償却";
-          } else if (assetTypeCode === "B0" || assetTypeCode === "E0") {
+          } else if (assetTypeCode === "B0" || assetTypeCode === "EO") {
             depreciationMethod = "均等償却";
           } else {
             // それ以外は従来のロジック
@@ -874,6 +874,13 @@ export default function AssetConverterTool() {
           outRow[28] = 取得価額;
           outRow[30] = 圧縮記帳額;
           outRow[33] = 差引取得価額;
+          // 償却期間の月数: 均等償却の場合は耐用年数の12倍
+          if (depreciationMethod === "均等償却" && 耐用年数) {
+            const 耐用年数数値 = parseFloat(耐用年数);
+            if (!isNaN(耐用年数数値)) {
+              outRow[34] = String(Math.round(耐用年数数値 * 12));
+            }
+          }
 
           outputData.push(outRow);
 
@@ -992,7 +999,16 @@ export default function AssetConverterTool() {
 
     const headerRow = ";" + TARGET_HEADER_LIST.join(",");
     const bodyRows = convertedRows.map((row) =>
-      row.map((v) => `"${v}"`).join(",")
+      row
+        .map((v, index) => {
+          // C列（資産種類コード、インデックス2）は文字列として扱うため、先頭にシングルクォートを付ける
+          // Excelで開いたときに文字列として認識されるようにする
+          if (index === 2) {
+            return `"'${v}"`;
+          }
+          return `"${v}"`;
+        })
+        .join(",")
     );
     const fullContent =
       metaHeader.join("\r\n") +
